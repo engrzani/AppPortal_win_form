@@ -481,7 +481,7 @@ function Show-AddProgramDialog {
 function Show-AddURLDialog {
     $urlForm = New-Object System.Windows.Forms.Form
     $urlForm.Text = "Add Website/URL"
-    $urlForm.Size = New-Object System.Drawing.Size(500, 240)
+    $urlForm.Size = New-Object System.Drawing.Size(500, 270)
     $urlForm.StartPosition = "CenterParent"
     $urlForm.FormBorderStyle = "FixedDialog"
     $urlForm.MaximizeBox = $false
