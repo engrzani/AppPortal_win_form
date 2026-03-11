@@ -101,14 +101,39 @@ A professional, portable Windows application launcher that allows you to create 
 
 ## Deployment Options
 
-### Option 1: Local Installation
-Copy `ApplicationPortal` to each PC's local drive
+### Option 1: Manual Deployment (Small Scale)
+Copy `ApplicationPortal` folder to each PC's local drive manually
 
 ### Option 2: Network Share
 Place on shared network location: `\\server\apps\ApplicationPortal`
 
-### Option 3: Automated Deployment
-Use `DeployPortal.ps1` with SCCM, Group Policy, or PDQ Deploy
+### Option 3: Automated Deployment (Enterprise)
+Use `DeployPortal.ps1` for automated deployment across multiple PCs:
+
+**Features:**
+- Copies portal from network share to local PC
+- Creates desktop shortcuts for all users
+- Creates Start Menu entries
+- Logs all deployment actions
+- Works with SCCM, Group Policy, or PDQ Deploy
+
+**Example Usage:**
+```powershell
+# Deploy to default location (C:\ApplicationPortal)
+.\DeployPortal.ps1 -SourcePath "\\server\share\ApplicationPortal"
+
+# Deploy to custom location
+.\DeployPortal.ps1 -SourcePath "\\server\share\ApplicationPortal" -TargetPath "D:\Apps\Portal"
+
+# Deploy without creating shortcuts
+.\DeployPortal.ps1 -SourcePath "\\server\share\ApplicationPortal" -CreateShortcuts $false
+```
+
+**When to Use:**
+- Deploying to 20+ computers
+- Group Policy deployments
+- SCCM/PDQ Deploy integration
+- Standardized enterprise rollout
 
 ## Security & Compliance
 
