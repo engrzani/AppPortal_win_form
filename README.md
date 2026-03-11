@@ -7,13 +7,15 @@ A professional, portable Windows application launcher that allows you to create 
 ✅ **Portable Deployment** - Build on one PC, copy to any Windows PC  
 ✅ **Custom Program Addition** - Add programs even if not installed on build PC  
 ✅ **URL/Website Support** - Add custom website links with icons  
-✅ **Custom Icons** - Set unique icons for each program/URL  
+✅ **Custom Icons** - Set unique icons for each program/URL and desktop shortcut  
 ✅ **Full Customization** - Colors, fonts, logo, header/footer text  
+✅ **User-Friendly Interface** - Close button, minimize/maximize, smooth animations  
+✅ **Silent Launch** - No PowerShell windows, completely seamless user experience  
 ✅ **No Installation Required** - Zero configuration on target PCs  
 ✅ **No Admin Rights** - Runs with standard user permissions  
-✅ **No ExecutionPolicy Bypass** - Uses batch/VBScript launchers  
+✅ **No ExecutionPolicy Bypass** - Uses VBScript silent launcher  
 ✅ **Domain Policy Compliant** - Works with corporate security policies  
-✅ **Professional UI** - Modern tile-based interface with search  
+✅ **Professional UI** - Modern tile-based interface with search and categories  
 
 ## Files Included
 
@@ -86,8 +88,16 @@ A professional, portable Windows application launcher that allows you to create 
 - Portal Title, Header, Footer text
 - Colors (R,G,B format): `0,120,215` = Blue
 - Font: Segoe UI, Arial, Calibri, etc.
-- Logo image (PNG, JPG, ICO)
+- Logo image (PNG, JPG, ICO) - shown in portal header
+- Desktop shortcut icon (PNG, JPG, ICO) - shown on user's desktop
 - Show user info & time
+
+**User Experience Features:**
+- ❌ Close button in header - one click to exit
+- 🪟 Minimize/Maximize buttons - standard Windows controls
+- 🔇 Silent launch - no PowerShell windows visible
+- 🎨 Smooth hover effects on tiles
+- 📱 Responsive layout with scrolling
 
 ## Deployment Options
 

@@ -47,6 +47,7 @@ $script:PortalConfig = @{
     ShowUserInfo = $true
     ShowTime = $true
     LogoPath = ""
+    DesktopIconPath = ""
 }
 
 # ============================================================================
@@ -106,7 +107,7 @@ function Get-InstalledPrograms {
 function Show-CustomizationDialog {
     $customForm = New-Object System.Windows.Forms.Form
     $customForm.Text = "Portal Customization"
-    $customForm.Size = New-Object System.Drawing.Size(500, 550)
+    $customForm.Size = New-Object System.Drawing.Size(500, 600)
     $customForm.StartPosition = "CenterParent"
     $customForm.FormBorderStyle = "FixedDialog"
     $customForm.MaximizeBox = $false
@@ -254,6 +255,36 @@ function Show-CustomizationDialog {
     
     $yPos += 30
     
+    # Desktop Shortcut Icon
+    $lblDesktopIcon = New-Object System.Windows.Forms.Label
+    $lblDesktopIcon.Text = "Desktop Icon:"
+    $lblDesktopIcon.Location = New-Object System.Drawing.Point(10, $yPos)
+    $lblDesktopIcon.Size = New-Object System.Drawing.Size(120, 20)
+    $customForm.Controls.Add($lblDesktopIcon)
+    
+    $txtDesktopIcon = New-Object System.Windows.Forms.TextBox
+    $txtDesktopIcon.Location = New-Object System.Drawing.Point(140, $yPos)
+    $txtDesktopIcon.Size = New-Object System.Drawing.Size(250, 20)
+    $txtDesktopIcon.Text = $script:PortalConfig.DesktopIconPath
+    $txtDesktopIcon.ReadOnly = $true
+    $customForm.Controls.Add($txtDesktopIcon)
+    
+    $btnBrowseDesktopIcon = New-Object System.Windows.Forms.Button
+    $btnBrowseDesktopIcon.Location = New-Object System.Drawing.Point(395, $yPos)
+    $btnBrowseDesktopIcon.Size = New-Object System.Drawing.Size(75, 23)
+    $btnBrowseDesktopIcon.Text = "Browse"
+    $btnBrowseDesktopIcon.Add_Click({
+        $openFile = New-Object System.Windows.Forms.OpenFileDialog
+        $openFile.Filter = "Icon Files|*.ico;*.png;*.jpg"
+        $openFile.Title = "Select Desktop Shortcut Icon"
+        if ($openFile.ShowDialog() -eq "OK") {
+            $txtDesktopIcon.Text = $openFile.FileName
+        }
+    })
+    $customForm.Controls.Add($btnBrowseDesktopIcon)
+    
+    $yPos += 30
+    
     # Show User Info
     $chkUserInfo = New-Object System.Windows.Forms.CheckBox
     $chkUserInfo.Text = "Show logged-in user information"
@@ -289,6 +320,7 @@ function Show-CustomizationDialog {
         $script:PortalConfig.FontName = $cmbFont.SelectedItem
         $script:PortalConfig.FontSize = $numFontSize.Value
         $script:PortalConfig.LogoPath = $txtLogo.Text
+        $script:PortalConfig.DesktopIconPath = $txtDesktopIcon.Text
         $script:PortalConfig.ShowUserInfo = $chkUserInfo.Checked
         $script:PortalConfig.ShowTime = $chkTime.Checked
         $customForm.Close()
@@ -620,6 +652,14 @@ function Build-PortalPackage {
         $script:PortalConfig.LogoPath = "Icons\$logoFile"
     }
     
+    # Copy desktop icon if specified
+    $desktopIconFile = ""
+    if ($script:PortalConfig.DesktopIconPath -and (Test-Path $script:PortalConfig.DesktopIconPath)) {
+        $desktopIconFile = Split-Path $script:PortalConfig.DesktopIconPath -Leaf
+        Copy-Item $script:PortalConfig.DesktopIconPath (Join-Path $iconsPath $desktopIconFile) -Force
+        $script:PortalConfig.DesktopIconPath = "Icons\$desktopIconFile"
+    }
+    
     # Process items and copy custom icons
     $portalItems = @()
     foreach ($item in $SelectedItems) {
@@ -693,6 +733,9 @@ $mainForm.Size = New-Object System.Drawing.Size(1100, 750)
 $mainForm.StartPosition = "CenterScreen"
 $mainForm.BackColor = $backgroundColor
 $mainForm.Font = New-Object System.Drawing.Font($config.FontName, $config.FontSize)
+$mainForm.FormBorderStyle = "Sizable"
+$mainForm.MinimizeBox = $true
+$mainForm.MaximizeBox = $true
 
 # Header panel
 $headerPanel = New-Object System.Windows.Forms.Panel
@@ -728,7 +771,7 @@ if ($config.ShowUserInfo -or $config.ShowTime) {
     $infoLabel = New-Object System.Windows.Forms.Label
     $infoLabel.ForeColor = $textColor
     $infoLabel.AutoSize = $true
-    $infoLabel.Location = New-Object System.Drawing.Point(800, 20)
+    $infoLabel.Location = New-Object System.Drawing.Point(750, 20)
     
     $infoText = ""
     if ($config.ShowUserInfo) {
@@ -741,6 +784,22 @@ if ($config.ShowUserInfo -or $config.ShowTime) {
     $infoLabel.Text = $infoText
     $headerPanel.Controls.Add($infoLabel)
 }
+
+# Close button in header
+$btnClosePortal = New-Object System.Windows.Forms.Button
+$btnClosePortal.Text = "X"
+$btnClosePortal.Size = New-Object System.Drawing.Size(40, 40)
+$btnClosePortal.Location = New-Object System.Drawing.Point(1040, 10)
+$btnClosePortal.BackColor = [System.Drawing.Color]::FromArgb(220, 50, 50)
+$btnClosePortal.ForeColor = $textColor
+$btnClosePortal.FlatStyle = "Flat"
+$btnClosePortal.FlatAppearance.BorderSize = 0
+$btnClosePortal.Font = New-Object System.Drawing.Font($config.FontName, 14, [System.Drawing.FontStyle]::Bold)
+$btnClosePortal.Cursor = "Hand"
+$btnClosePortal.Add_Click({ $mainForm.Close() })
+$btnClosePortal.Add_MouseEnter({ $this.BackColor = [System.Drawing.Color]::FromArgb(255, 70, 70) })
+$btnClosePortal.Add_MouseLeave({ $this.BackColor = [System.Drawing.Color]::FromArgb(220, 50, 50) })
+$headerPanel.Controls.Add($btnClosePortal)
 
 # Search panel
 $searchPanel = New-Object System.Windows.Forms.Panel
@@ -807,17 +866,19 @@ function Create-TileButton {
     param($Item)
     
     $button = New-Object System.Windows.Forms.Button
-    $button.Size = New-Object System.Drawing.Size(160, 140)
+    $button.Size = New-Object System.Drawing.Size(170, 150)
     $button.BackColor = $primaryColor
     $button.ForeColor = $textColor
     $button.FlatStyle = "Flat"
-    $button.FlatAppearance.BorderSize = 0
+    $button.FlatAppearance.BorderSize = 1
+    $button.FlatAppearance.BorderColor = [System.Drawing.Color]::FromArgb(200, 200, 200)
     $button.TextAlign = "BottomCenter"
-    $button.Font = New-Object System.Drawing.Font($config.FontName, 9)
-    $button.Margin = New-Object System.Windows.Forms.Padding(5)
+    $button.Font = New-Object System.Drawing.Font($config.FontName, 9, [System.Drawing.FontStyle]::Bold)
+    $button.Margin = New-Object System.Windows.Forms.Padding(8)
     $button.Cursor = "Hand"
+    $button.TabStop = $false
     
-    # Set button text
+    # Set button text with word wrap
     if ($Item.Name.Length -gt 25) {
         $button.Text = $Item.Name.Substring(0, 22) + "..."
     }
@@ -834,8 +895,10 @@ function Create-TileButton {
         if (Test-Path $iconFullPath) {
             try {
                 $img = [System.Drawing.Image]::FromFile($iconFullPath)
-                $button.Image = $img
+                $resizedImg = New-Object System.Drawing.Bitmap($img, 64, 64)
+                $button.Image = $resizedImg
                 $button.ImageAlign = "TopCenter"
+                $button.TextImageRelation = "ImageAboveText"
                 $iconLoaded = $true
             }
             catch {
@@ -849,8 +912,11 @@ function Create-TileButton {
         if (Test-Path $Item.Path) {
             try {
                 $icon = [System.Drawing.Icon]::ExtractAssociatedIcon($Item.Path)
-                $button.Image = $icon.ToBitmap()
+                $iconBitmap = $icon.ToBitmap()
+                $resizedImg = New-Object System.Drawing.Bitmap($iconBitmap, 64, 64)
+                $button.Image = $resizedImg
                 $button.ImageAlign = "TopCenter"
+                $button.TextImageRelation = "ImageAboveText"
             }
             catch {
                 # Icon extraction failed
@@ -861,10 +927,12 @@ function Create-TileButton {
     # Hover effects
     $button.Add_MouseEnter({
         $this.BackColor = $hoverColor
+        $this.FlatAppearance.BorderColor = $textColor
     })
     
     $button.Add_MouseLeave({
         $this.BackColor = $primaryColor
+        $this.FlatAppearance.BorderColor = [System.Drawing.Color]::FromArgb(200, 200, 200)
     })
     
     # Click action
@@ -915,16 +983,26 @@ function Refresh-Tiles {
     $grouped = $filteredItems | Group-Object -Property Category | Sort-Object Name
     
     foreach ($group in $grouped) {
-        # Category label
+        # Category label with separator line
+        $categoryPanel = New-Object System.Windows.Forms.Panel
+        $categoryPanel.AutoSize = $false
+        $categoryPanel.Width = 1050
+        $categoryPanel.Height = 40
+        $categoryPanel.BackColor = $backgroundColor
+        
         $categoryLabel = New-Object System.Windows.Forms.Label
-        $categoryLabel.Text = $group.Name
-        $categoryLabel.Font = New-Object System.Drawing.Font($config.FontName, 12, [System.Drawing.FontStyle]::Bold)
+        $categoryLabel.Text = "  " + $group.Name
+        $categoryLabel.Font = New-Object System.Drawing.Font($config.FontName, 11, [System.Drawing.FontStyle]::Bold)
         $categoryLabel.AutoSize = $false
         $categoryLabel.Width = 1050
         $categoryLabel.Height = 30
         $categoryLabel.TextAlign = "MiddleLeft"
-        $categoryLabel.Padding = New-Object System.Windows.Forms.Padding(5, 5, 0, 0)
-        $tilePanel.Controls.Add($categoryLabel)
+        $categoryLabel.BackColor = [System.Drawing.Color]::FromArgb(230, 230, 230)
+        $categoryLabel.ForeColor = [System.Drawing.Color]::FromArgb(60, 60, 60)
+        $categoryLabel.Padding = New-Object System.Windows.Forms.Padding(10, 5, 0, 0)
+        $categoryPanel.Controls.Add($categoryLabel)
+        
+        $tilePanel.Controls.Add($categoryPanel)
         
         # Add tiles
         foreach ($item in $group.Group) {
@@ -953,10 +1031,11 @@ $mainForm.Add_Shown({$mainForm.Activate()})
     $batchContent = @"
 @echo off
 REM Application Portal Launcher
-REM This batch file runs the portal without requiring ExecutionPolicy changes
+REM Launches portal with minimal window display
 
 cd /d "%~dp0"
-powershell.exe -NoProfile -WindowStyle Hidden -File "portal.ps1"
+start /min powershell.exe -WindowStyle Hidden -NoProfile -ExecutionPolicy Bypass -File "portal.ps1"
+exit
 "@
     
     $batchPath = Join-Path $portalPath "LaunchPortal.bat"
@@ -964,11 +1043,13 @@ powershell.exe -NoProfile -WindowStyle Hidden -File "portal.ps1"
     
     # Create VBS launcher for completely silent execution
     $vbsContent = @"
+' Application Portal Silent Launcher
+' Launches portal without any visible windows
 Set objShell = CreateObject("WScript.Shell")
 Set objFSO = CreateObject("Scripting.FileSystemObject")
 strPath = objFSO.GetParentFolderName(WScript.ScriptFullName)
 objShell.CurrentDirectory = strPath
-objShell.Run "powershell.exe -NoProfile -WindowStyle Hidden -File ""portal.ps1""", 0, False
+objShell.Run "powershell.exe -WindowStyle Hidden -NoProfile -ExecutionPolicy Bypass -Command ""& {Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass; & '""" & strPath & "\portal.ps1'"""}""", 0, False
 Set objShell = Nothing
 Set objFSO = Nothing
 "@
@@ -980,10 +1061,24 @@ Set objFSO = Nothing
     $shell = New-Object -ComObject WScript.Shell
     $shortcutPath = Join-Path $portalPath "Application Portal.lnk"
     $shortcut = $shell.CreateShortcut($shortcutPath)
-    $shortcut.TargetPath = $batchPath
+    $shortcut.TargetPath = Join-Path $portalPath "LaunchPortal.vbs"
     $shortcut.WorkingDirectory = $portalPath
-    $shortcut.IconLocation = "$env:SystemRoot\System32\imageres.dll,3"
     $shortcut.Description = "Launch Application Portal"
+    
+    # Set custom icon if specified, otherwise use default
+    if ($script:PortalConfig.DesktopIconPath) {
+        $iconPath = Join-Path $portalPath $script:PortalConfig.DesktopIconPath
+        if (Test-Path $iconPath) {
+            $shortcut.IconLocation = $iconPath
+        }
+        else {
+            $shortcut.IconLocation = "$env:SystemRoot\System32\imageres.dll,3"
+        }
+    }
+    else {
+        $shortcut.IconLocation = "$env:SystemRoot\System32\imageres.dll,3"
+    }
+    
     $shortcut.Save()
     
     [System.Runtime.Interopservices.Marshal]::ReleaseComObject($shell) | Out-Null
