@@ -38,10 +38,10 @@ $script:PortalConfig = @{
     PortalTitle = "Application Portal"
     HeaderText = "Welcome to Application Portal"
     FooterText = "IT Department"
-    PrimaryColor = "0,120,215"
-    HoverColor = "0,95,180"
+    PrimaryColor = "0,122,204"
+    HoverColor = "0,102,184"
     TextColor = "255,255,255"
-    BackgroundColor = "245,245,245"
+    BackgroundColor = "240,240,240"
     FontName = "Segoe UI"
     FontSize = 10
     ShowUserInfo = $true
@@ -784,7 +784,8 @@ if ($config.ShowUserInfo -or $config.ShowTime) {
     $infoLabel = New-Object System.Windows.Forms.Label
     $infoLabel.ForeColor = $textColor
     $infoLabel.AutoSize = $true
-    $infoLabel.Location = New-Object System.Drawing.Point(750, 20)
+    $infoLabel.Location = New-Object System.Drawing.Point(680, 22)
+    $infoLabel.Anchor = "Top,Right"
     
     $infoText = ""
     if ($config.ShowUserInfo) {
@@ -798,19 +799,20 @@ if ($config.ShowUserInfo -or $config.ShowTime) {
     $headerPanel.Controls.Add($infoLabel)
 }
 
-# Close button in header
+# Close button in header (anchored to right)
 $btnClosePortal = New-Object System.Windows.Forms.Button
 $btnClosePortal.Text = "X"
-$btnClosePortal.Size = New-Object System.Drawing.Size(40, 40)
-$btnClosePortal.Location = New-Object System.Drawing.Point(1040, 10)
+$btnClosePortal.Size = New-Object System.Drawing.Size(45, 45)
+$btnClosePortal.Location = New-Object System.Drawing.Point(1040, 8)
+$btnClosePortal.Anchor = "Top,Right"
 $btnClosePortal.BackColor = [System.Drawing.Color]::FromArgb(220, 50, 50)
 $btnClosePortal.ForeColor = $textColor
 $btnClosePortal.FlatStyle = "Flat"
 $btnClosePortal.FlatAppearance.BorderSize = 0
-$btnClosePortal.Font = New-Object System.Drawing.Font($config.FontName, 14, [System.Drawing.FontStyle]::Bold)
+$btnClosePortal.Font = New-Object System.Drawing.Font($config.FontName, 16, [System.Drawing.FontStyle]::Bold)
 $btnClosePortal.Cursor = "Hand"
 $btnClosePortal.Add_Click({ $mainForm.Close() })
-$btnClosePortal.Add_MouseEnter({ $this.BackColor = [System.Drawing.Color]::FromArgb(255, 70, 70) })
+$btnClosePortal.Add_MouseEnter({ $this.BackColor = [System.Drawing.Color]::FromArgb(255, 0, 0) })
 $btnClosePortal.Add_MouseLeave({ $this.BackColor = [System.Drawing.Color]::FromArgb(220, 50, 50) })
 $headerPanel.Controls.Add($btnClosePortal)
 
@@ -859,6 +861,18 @@ $tilePanel.WrapContents = $true
 $tilePanel.BackColor = $backgroundColor
 $tilePanel.Padding = New-Object System.Windows.Forms.Padding(10)
 $mainForm.Controls.Add($tilePanel)
+
+# Add empty state message if no items
+if ($items.Count -eq 0) {
+    $emptyLabel = New-Object System.Windows.Forms.Label
+    $emptyLabel.Text = "No applications added yet.`n`nUse the Portal Builder to add programs and URLs."
+    $emptyLabel.Font = New-Object System.Drawing.Font($config.FontName, 14)
+    $emptyLabel.ForeColor = [System.Drawing.Color]::Gray
+    $emptyLabel.AutoSize = $true
+    $emptyLabel.TextAlign = "MiddleCenter"
+    $emptyLabel.Location = New-Object System.Drawing.Point(350, 200)
+    $tilePanel.Controls.Add($emptyLabel)
+}
 
 # Footer panel
 $footerPanel = New-Object System.Windows.Forms.Panel
