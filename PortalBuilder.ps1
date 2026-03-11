@@ -1359,13 +1359,25 @@ $listView.Columns.Add("Path", -2) | Out-Null  # -2 = Auto-size to fill remaining
 $bottomPanel = New-Object System.Windows.Forms.Panel
 $bottomPanel.Height = 60
 $bottomPanel.Dock = "Bottom"
+$bottomPanel.BackColor = [System.Drawing.Color]::FromArgb(240, 240, 240)
+
+$lblStatus = New-Object System.Windows.Forms.Label
+$lblStatus.Text = "Ready - Select programs and click Build Portal Package"
+$lblStatus.Location = New-Object System.Drawing.Point(10, 20)
+$lblStatus.AutoSize = $true
+$bottomPanel.Controls.Add($lblStatus)
 
 $btnBuild = New-Object System.Windows.Forms.Button
 $btnBuild.Text = "Build Portal Package"
 $btnBuild.Size = New-Object System.Drawing.Size(200, 35)
-$btnBuild.Anchor = "Bottom,Right"
-$btnBuild.Location = New-Object System.Drawing.Point(770, 15)
+$btnBuild.Anchor = "Right"
+$btnBuild.Location = New-Object System.Drawing.Point(770, 12)
 $btnBuild.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
+$btnBuild.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$btnBuild.ForeColor = [System.Drawing.Color]::White
+$btnBuild.FlatStyle = "Flat"
+$btnBuild.FlatAppearance.BorderSize = 0
+$btnBuild.Cursor = "Hand"
 $btnBuild.Add_Click({
     # Get checked items
     $selectedItems = @()
@@ -1408,12 +1420,6 @@ $btnBuild.Add_Click({
     }
 })
 $bottomPanel.Controls.Add($btnBuild)
-
-$lblStatus = New-Object System.Windows.Forms.Label
-$lblStatus.Text = "Ready - Select programs and click Build Portal Package"
-$lblStatus.Location = New-Object System.Drawing.Point(10, 25)
-$lblStatus.AutoSize = $true
-$bottomPanel.Controls.Add($lblStatus)
 
 $mainForm.Controls.Add($bottomPanel)
 
