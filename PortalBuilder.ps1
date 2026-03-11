@@ -1366,7 +1366,7 @@ $btnBuild = New-Object System.Windows.Forms.Button
 $btnBuild.Text = "Build Portal Package"
 $btnBuild.Size = New-Object System.Drawing.Size(200, 35)
 $btnBuild.Anchor = "Bottom,Right"
-$btnBuild.Location = New-Object System.Drawing.Point(($mainForm.ClientSize.Width - 220), 15)
+$btnBuild.Location = New-Object System.Drawing.Point(770, 15)
 $btnBuild.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
 $btnBuild.Add_Click({
     # Get checked items
