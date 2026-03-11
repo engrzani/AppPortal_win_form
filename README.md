@@ -8,6 +8,7 @@ A professional, portable Windows application launcher that allows you to create 
 - **Custom Program Addition** - Add programs even if not installed on build PC  
 - **URL/Website Support** - Add custom website links with icons  
 - **Custom Icons** - Set unique icons for each program/URL and desktop shortcut  
+- **User Customization** - Hide apps, mark favorites, settings per Windows user profile  
 - **Full Customization** - Colors, fonts, logo, header/footer text  
 - **User-Friendly Interface** - Close button, minimize/maximize, smooth animations  
 - **Silent Launch** - No PowerShell windows, completely seamless user experience  
@@ -19,11 +20,15 @@ A professional, portable Windows application launcher that allows you to create 
 
 ## Files Included
 
+### Application Portal
 - **PortalBuilder.ps1** - Main portal builder application
 - **RunBuilder.bat** - Batch launcher (recommended)
 - **RunBuilder.vbs** - Silent VBScript launcher
 - **DeployPortal.ps1** - Automated deployment script for IT
-- **README.txt** - Complete documentation
+
+### Profile Management (For Shared PCs)
+- **CleanOldProfiles.ps1** - Removes user profiles older than specified days
+- **ScheduleProfileCleanup.ps1** - Automates profile cleanup with scheduled task
 
 ## Quick Start
 
@@ -93,6 +98,17 @@ A professional, portable Windows application launcher that allows you to create 
 - Show user info & time
 
 **User Experience Features:**
+### User Customization (Per Windows Profile)
+
+**Settings Button (⚙) in Portal:**
+
+Each user can personalize their portal view:
+- **Hide Apps** - Uncheck apps they don't use
+- **Mark Favorites** - Apps marked with ★ appear at top
+- **Reset to Default** - Restore all apps
+- Settings saved to user's Windows profile
+- Works on shared PCs - each domain login has separate preferences
+
 - Close button in header - one click to exit
 - Minimize/Maximize buttons - standard Windows controls
 - Silent launch - no PowerShell windows visible
@@ -146,9 +162,54 @@ Use `DeployPortal.ps1` for automated deployment across multiple PCs:
 - Domain policy compliant  
 - Fully auditable code with SYNOPSIS documentation  
 
-## Screenshots
+## Profile Management for Shared PCs
 
-*Coming soon - Portal Builder interface and generated portal*
+For shared workstations where disk space fills up with old user profiles:
+
+### Manual Profile Cleanup
+
+**Test First (Dry Run):**
+```powershell
+.\CleanOldProfiles.ps1 -DryRun
+```
+Shows which profiles would be deleted without actually deleting them.
+
+**Remove Profiles Older Than 90 Days:**
+```powershell
+.\CleanOldProfiles.ps1 -DaysOld 90
+```
+
+**Exclude Specific Users:**
+```powershell
+.\CleanOldProfiles.ps1 -DaysOld 90 -ExcludeUsers @("admin.user", "it.support")
+```
+
+### Automated Profile Cleanup
+
+**Schedule Weekly Cleanup (Sundays at 2 AM):**
+```powershell
+.\ScheduleProfileCleanup.ps1
+```
+
+**Schedule Daily Cleanup:**
+```powershell
+.\ScheduleProfileCleanup.ps1 -ScheduleType Daily -Time "03:00" -DaysOld 60
+```
+
+**Features:**
+- Automatically removes profiles not used in X days (default 90)
+- Cleans both C:\Users folder and registry entries
+- Protects system profiles (Administrator, Public, Default)
+- Excludes currently logged-in users
+- Comprehensive logging with space freed calculations
+- Requires Administrator privileges
+
+**Safety Features:**
+- Automatic exclusion of system accounts
+- Never deletes currently logged-in users
+- Dry-run mode for testing
+- Detailed logging of all actions
+- Custom exclusion list support
 
 ## Technical Details
 
@@ -156,16 +217,18 @@ Use `DeployPortal.ps1` for automated deployment across multiple PCs:
 - **Framework:** .NET Framework 4.0+
 - **GUI:** Windows Forms (System.Windows.Forms)
 - **Config Format:** JSON
+- **User Preferences:** Stored in %APPDATA%\ApplicationPortal\preferences.json
 - **Supported OS:** Windows 7/8/10/11, Server 2008 R2+
 
-## Support
+## Version
 
-For complete documentation, see `README.txt`
+**v1.0** - March 2026 - Initial Release  
++ Application Portal with user customization  
++ Hide/show apps and favorites per Windows profile  
++ Profile management tools for shared PCs  
++ Automatic cleanup of old user profiles  
++ Portable deployment with no installation required
 
 ## License
 
 Internal use only - Copyright © 2026
-
-## Version
-
-**v1.0** - March 2026 - Initial Release
