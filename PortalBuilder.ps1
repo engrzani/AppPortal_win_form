@@ -918,24 +918,25 @@ function Create-TileButton {
     param($Item)
     
     $button = New-Object System.Windows.Forms.Button
-    $button.Size = New-Object System.Drawing.Size(170, 150)
+    $button.Size = New-Object System.Drawing.Size(160, 140)
     $button.BackColor = $primaryColor
     $button.ForeColor = $textColor
     $button.FlatStyle = "Flat"
     $button.FlatAppearance.BorderSize = 1
-    $button.FlatAppearance.BorderColor = [System.Drawing.Color]::FromArgb(200, 200, 200)
+    $button.FlatAppearance.BorderColor = [System.Drawing.Color]::FromArgb(180, 180, 180)
     $button.TextAlign = "BottomCenter"
-    $button.Font = New-Object System.Drawing.Font($config.FontName, 9, [System.Drawing.FontStyle]::Bold)
-    $button.Margin = New-Object System.Windows.Forms.Padding(8)
+    $button.Font = New-Object System.Drawing.Font($config.FontName, 9, [System.Drawing.FontStyle]::Regular)
+    $button.Margin = New-Object System.Windows.Forms.Padding(10)
+    $button.Padding = New-Object System.Windows.Forms.Padding(5, 10, 5, 10)
     $button.Cursor = "Hand"
     $button.TabStop = $false
     
     # Set button text with word wrap
-    if ($Item.Name.Length -gt 25) {
-        $button.Text = $Item.Name.Substring(0, 22) + "..."
+    if ($Item.Name.Length -gt 20) {
+        $button.Text = "`n`n`n`n" + $Item.Name.Substring(0, 17) + "..."
     }
     else {
-        $button.Text = $Item.Name
+        $button.Text = "`n`n`n`n" + $Item.Name
     }
     
     # Load icon
@@ -947,11 +948,12 @@ function Create-TileButton {
         if (Test-Path $iconFullPath) {
             try {
                 $img = [System.Drawing.Image]::FromFile($iconFullPath)
-                $resizedImg = New-Object System.Drawing.Bitmap($img, 64, 64)
+                $resizedImg = New-Object System.Drawing.Bitmap($img, 48, 48)
                 $button.Image = $resizedImg
                 $button.ImageAlign = "TopCenter"
                 $button.TextImageRelation = "ImageAboveText"
                 $iconLoaded = $true
+                $img.Dispose()
             }
             catch {
                 # Icon load failed
@@ -965,10 +967,12 @@ function Create-TileButton {
             try {
                 $icon = [System.Drawing.Icon]::ExtractAssociatedIcon($Item.Path)
                 $iconBitmap = $icon.ToBitmap()
-                $resizedImg = New-Object System.Drawing.Bitmap($iconBitmap, 64, 64)
+                $resizedImg = New-Object System.Drawing.Bitmap($iconBitmap, 48, 48)
                 $button.Image = $resizedImg
                 $button.ImageAlign = "TopCenter"
                 $button.TextImageRelation = "ImageAboveText"
+                $iconBitmap.Dispose()
+                $icon.Dispose()
             }
             catch {
                 # Icon extraction failed
@@ -1044,19 +1048,20 @@ function Refresh-Tiles {
         $categoryPanel = New-Object System.Windows.Forms.Panel
         $categoryPanel.AutoSize = $false
         $categoryPanel.Width = 1050
-        $categoryPanel.Height = 40
+        $categoryPanel.Height = 35
         $categoryPanel.BackColor = $backgroundColor
+        $categoryPanel.Margin = New-Object System.Windows.Forms.Padding(0, 10, 0, 5)
         
         $categoryLabel = New-Object System.Windows.Forms.Label
         $categoryLabel.Text = "  " + $group.Name
-        $categoryLabel.Font = New-Object System.Drawing.Font($config.FontName, 11, [System.Drawing.FontStyle]::Bold)
+        $categoryLabel.Font = New-Object System.Drawing.Font($config.FontName, 10, [System.Drawing.FontStyle]::Bold)
         $categoryLabel.AutoSize = $false
         $categoryLabel.Width = 1050
-        $categoryLabel.Height = 30
+        $categoryLabel.Height = 28
         $categoryLabel.TextAlign = "MiddleLeft"
-        $categoryLabel.BackColor = [System.Drawing.Color]::FromArgb(230, 230, 230)
-        $categoryLabel.ForeColor = [System.Drawing.Color]::FromArgb(60, 60, 60)
-        $categoryLabel.Padding = New-Object System.Windows.Forms.Padding(10, 5, 0, 0)
+        $categoryLabel.BackColor = [System.Drawing.Color]::FromArgb(225, 225, 225)
+        $categoryLabel.ForeColor = [System.Drawing.Color]::FromArgb(40, 40, 40)
+        $categoryLabel.Padding = New-Object System.Windows.Forms.Padding(15, 0, 0, 0)
         $categoryPanel.Controls.Add($categoryLabel)
         
         $tilePanel.Controls.Add($categoryPanel)
