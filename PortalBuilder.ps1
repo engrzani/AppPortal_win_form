@@ -597,27 +597,52 @@ function Show-AddURLDialog {
 # PURPOSE: Updates the displayed list based on search filter
 # ============================================================================
 function Refresh-ItemList {
-    param($ListView, $SearchText)
+    param($ListView, $SearchText, $ResultLabel = $null)
     
     $ListView.Items.Clear()
     
     $filtered = $script:AllItems
     if ($SearchText -and $SearchText.Trim() -ne "") {
         # Case-insensitive search in name, path, and category
+        $searchTerm = $SearchText.Trim()
         $filtered = $script:AllItems | Where-Object { 
-            ($_.Name -like "*$SearchText*") -or 
-            ($_.Path -like "*$SearchText*") -or 
-            ($_.Category -like "*$SearchText*")
+            ($_.Name -like "*$searchTerm*") -or 
+            ($_.Path -like "*$searchTerm*") -or 
+            ($_.Category -like "*$searchTerm*")
         }
     }
     
-    foreach ($item in $filtered) {
-        $listItem = New-Object System.Windows.Forms.ListViewItem($item.Name)
-        $listItem.SubItems.Add($item.Type)
-        $listItem.SubItems.Add($item.Category)
-        $listItem.SubItems.Add($item.Path)
-        $listItem.Tag = $item
-        $ListView.Items.Add($listItem) | Out-Null
+    if ($filtered.Count -eq 0 -and $SearchText.Trim() -ne "") {
+        # Show "No results" message when search has no matches
+        $noResultItem = New-Object System.Windows.Forms.ListViewItem("No programs found matching '$($SearchText.Trim())'")
+        $noResultItem.ForeColor = [System.Drawing.Color]::Gray
+        $ListView.Items.Add($noResultItem) | Out-Null
+        
+        if ($ResultLabel) {
+            $ResultLabel.Text = "No results found"
+            $ResultLabel.ForeColor = [System.Drawing.Color]::Red
+        }
+    }
+    else {
+        foreach ($item in $filtered) {
+            $listItem = New-Object System.Windows.Forms.ListViewItem($item.Name)
+            $listItem.SubItems.Add($item.Type)
+            $listItem.SubItems.Add($item.Category)
+            $listItem.SubItems.Add($item.Path)
+            $listItem.Tag = $item
+            $ListView.Items.Add($listItem) | Out-Null
+        }
+        
+        if ($ResultLabel) {
+            if ($SearchText.Trim() -ne "") {
+                $ResultLabel.Text = "Found $($filtered.Count) program(s)"
+                $ResultLabel.ForeColor = [System.Drawing.Color]::Green
+            }
+            else {
+                $ResultLabel.Text = "Showing all $($filtered.Count) program(s)"
+                $ResultLabel.ForeColor = [System.Drawing.Color]::Gray
+            }
+        }
     }
 }
 
@@ -1244,7 +1269,7 @@ $btnAddProgram.Add_Click({
     $newProgram = Show-AddProgramDialog
     if ($newProgram) {
         $script:AllItems += $newProgram
-        Refresh-ItemList -ListView $listView -SearchText $txtSearch.Text
+        Refresh-ItemList -ListView $listView -SearchText $txtSearch.Text -ResultLabel $lblSearchResults
     }
 })
 $toolbar.Items.Add($btnAddProgram)
@@ -1255,7 +1280,7 @@ $btnAddURL.Add_Click({
     $newURL = Show-AddURLDialog
     if ($newURL) {
         $script:AllItems += $newURL
-        Refresh-ItemList -ListView $listView -SearchText $txtSearch.Text
+        Refresh-ItemList -ListView $listView -SearchText $txtSearch.Text -ResultLabel $lblSearchResults
     }
 })
 $toolbar.Items.Add($btnAddURL)
@@ -1264,7 +1289,7 @@ $btnRefresh = New-Object System.Windows.Forms.ToolStripButton
 $btnRefresh.Text = "Refresh Programs"
 $btnRefresh.Add_Click({
     $script:AllItems = @(Get-InstalledPrograms)
-    Refresh-ItemList -ListView $listView -SearchText $txtSearch.Text
+    Refresh-ItemList -ListView $listView -SearchText $txtSearch.Text -ResultLabel $lblSearchResults
     [System.Windows.Forms.MessageBox]::Show("Program list refreshed.", "Info", "OK", "Information")
 })
 $toolbar.Items.Add($btnRefresh)
@@ -1277,7 +1302,7 @@ $btnRemove.Add_Click({
     if ($listView.SelectedItems.Count -gt 0) {
         $selectedItem = $listView.SelectedItems[0].Tag
         $script:AllItems = @($script:AllItems | Where-Object { $_ -ne $selectedItem })
-        Refresh-ItemList -ListView $listView -SearchText $txtSearch.Text
+        Refresh-ItemList -ListView $listView -SearchText $txtSearch.Text -ResultLabel $lblSearchResults
     }
 })
 $toolbar.Items.Add($btnRemove)
@@ -1298,10 +1323,17 @@ $searchPanel.Controls.Add($lblSearch)
 $txtSearch = New-Object System.Windows.Forms.TextBox
 $txtSearch.Location = New-Object System.Drawing.Point(70, 8)
 $txtSearch.Size = New-Object System.Drawing.Size(300, 25)
-$txtSearch.Add_TextChanged({
-    Refresh-ItemList -ListView $listView -SearchText $txtSearch.Text
-})
 $searchPanel.Controls.Add($txtSearch)
+
+$lblSearchResults = New-Object System.Windows.Forms.Label
+$lblSearchResults.Location = New-Object System.Drawing.Point(380, 10)
+$lblSearchResults.AutoSize = $true
+$lblSearchResults.ForeColor = [System.Drawing.Color]::Gray
+$searchPanel.Controls.Add($lblSearchResults)
+
+$txtSearch.Add_TextChanged({
+    Refresh-ItemList -ListView $listView -SearchText $txtSearch.Text -ResultLabel $lblSearchResults
+})
 
 $mainForm.Controls.Add($searchPanel)
 
@@ -1382,7 +1414,7 @@ $bottomPanel.Controls.Add($lblStatus)
 $mainForm.Controls.Add($bottomPanel)
 
 # Initial list population
-Refresh-ItemList -ListView $listView -SearchText ""
+Refresh-ItemList -ListView $listView -SearchText "" -ResultLabel $lblSearchResults
 
 # Show form
 $mainForm.Add_Shown({$mainForm.Activate()})
