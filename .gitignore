@@ -1,0 +1,20 @@
+# Generated Portal Folders
+ApplicationPortal/
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# PowerShell
+*.ps1xml
+
+# Backup files
+*.bak
+*~
