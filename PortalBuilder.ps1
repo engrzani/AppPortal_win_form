@@ -1355,9 +1355,7 @@ $listView.Columns.Add("Type", 80) | Out-Null
 $listView.Columns.Add("Category", 150) | Out-Null
 $listView.Columns.Add("Path", -2) | Out-Null  # -2 = Auto-size to fill remaining width
 
-$mainForm.Controls.Add($listView)
-
-# Bottom panel with buttons
+# Bottom panel with buttons (must be added before Fill-docked listView)
 $bottomPanel = New-Object System.Windows.Forms.Panel
 $bottomPanel.Height = 60
 $bottomPanel.Dock = "Bottom"
@@ -1418,6 +1416,9 @@ $lblStatus.AutoSize = $true
 $bottomPanel.Controls.Add($lblStatus)
 
 $mainForm.Controls.Add($bottomPanel)
+
+# Add ListView last (Fill-docked controls should be added last)
+$mainForm.Controls.Add($listView)
 
 # Initial list population
 Refresh-ItemList -ListView $listView -SearchText "" -ResultLabel $lblSearchResults
