@@ -602,8 +602,13 @@ function Refresh-ItemList {
     $ListView.Items.Clear()
     
     $filtered = $script:AllItems
-    if ($SearchText) {
-        $filtered = $script:AllItems | Where-Object { $_.Name -like "*$SearchText*" }
+    if ($SearchText -and $SearchText.Trim() -ne "") {
+        # Case-insensitive search in name, path, and category
+        $filtered = $script:AllItems | Where-Object { 
+            ($_.Name -like "*$SearchText*") -or 
+            ($_.Path -like "*$SearchText*") -or 
+            ($_.Category -like "*$SearchText*")
+        }
     }
     
     foreach ($item in $filtered) {
@@ -736,6 +741,14 @@ $mainForm.Font = New-Object System.Drawing.Font($config.FontName, $config.FontSi
 $mainForm.FormBorderStyle = "Sizable"
 $mainForm.MinimizeBox = $true
 $mainForm.MaximizeBox = $true
+
+# Set application icon
+try {
+    $iconPath = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
+    if (Test-Path $iconPath) {
+        $mainForm.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon($iconPath)
+    }
+} catch { }
 
 # Header panel
 $headerPanel = New-Object System.Windows.Forms.Panel
@@ -966,13 +979,18 @@ function Create-TileButton {
 function Refresh-Tiles {
     $tilePanel.Controls.Clear()
     
-    $searchText = $searchBox.Text
+    $searchText = $searchBox.Text.Trim()
     $selectedCategory = $categoryCombo.SelectedItem
     
     $filteredItems = $items
     
-    if ($searchText) {
-        $filteredItems = $filteredItems | Where-Object { $_.Name -like "*$searchText*" }
+    if ($searchText -and $searchText -ne "") {
+        # Case-insensitive search in name, path, and category
+        $filteredItems = $filteredItems | Where-Object { 
+            ($_.Name -like "*$searchText*") -or 
+            ($_.Path -like "*$searchText*") -or 
+            ($_.Category -like "*$searchText*")
+        }
     }
     
     if ($selectedCategory -and $selectedCategory -ne "All Categories") {
@@ -1167,6 +1185,17 @@ $mainForm.Text = "Application Portal Builder"
 $mainForm.Size = New-Object System.Drawing.Size(1000, 700)
 $mainForm.StartPosition = "CenterScreen"
 $mainForm.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+$mainForm.MinimizeBox = $true
+$mainForm.MaximizeBox = $true
+$mainForm.FormBorderStyle = "Sizable"
+
+# Set application icon (extract from PowerShell executable)
+try {
+    $iconPath = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
+    if (Test-Path $iconPath) {
+        $mainForm.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon($iconPath)
+    }
+} catch { }
 
 # Menu strip
 $menuStrip = New-Object System.Windows.Forms.MenuStrip
