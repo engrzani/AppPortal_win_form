@@ -775,7 +775,7 @@ if ($config.ShowUserInfo -or $config.ShowTime) {
     
     $infoText = ""
     if ($config.ShowUserInfo) {
-        $infoText = "User: $env:USERNAME"
+        $infoText = "Workstation: $env:COMPUTERNAME"
     }
     if ($config.ShowTime) {
         if ($infoText) { $infoText += " | " }

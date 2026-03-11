@@ -4,18 +4,18 @@ A professional, portable Windows application launcher that allows you to create 
 
 ## Features
 
-✅ **Portable Deployment** - Build on one PC, copy to any Windows PC  
-✅ **Custom Program Addition** - Add programs even if not installed on build PC  
-✅ **URL/Website Support** - Add custom website links with icons  
-✅ **Custom Icons** - Set unique icons for each program/URL and desktop shortcut  
-✅ **Full Customization** - Colors, fonts, logo, header/footer text  
-✅ **User-Friendly Interface** - Close button, minimize/maximize, smooth animations  
-✅ **Silent Launch** - No PowerShell windows, completely seamless user experience  
-✅ **No Installation Required** - Zero configuration on target PCs  
-✅ **No Admin Rights** - Runs with standard user permissions  
-✅ **No ExecutionPolicy Bypass** - Uses VBScript silent launcher  
-✅ **Domain Policy Compliant** - Works with corporate security policies  
-✅ **Professional UI** - Modern tile-based interface with search and categories  
+- **Portable Deployment** - Build on one PC, copy to any Windows PC  
+- **Custom Program Addition** - Add programs even if not installed on build PC  
+- **URL/Website Support** - Add custom website links with icons  
+- **Custom Icons** - Set unique icons for each program/URL and desktop shortcut  
+- **Full Customization** - Colors, fonts, logo, header/footer text  
+- **User-Friendly Interface** - Close button, minimize/maximize, smooth animations  
+- **Silent Launch** - No PowerShell windows, completely seamless user experience  
+- **No Installation Required** - Zero configuration on target PCs  
+- **No Admin Rights** - Runs with standard user permissions  
+- **No ExecutionPolicy Bypass** - Uses VBScript silent launcher  
+- **Domain Policy Compliant** - Works with corporate security policies  
+- **Professional UI** - Modern tile-based interface with search and categories  
 
 ## Files Included
 
@@ -93,11 +93,11 @@ A professional, portable Windows application launcher that allows you to create 
 - Show user info & time
 
 **User Experience Features:**
-- ❌ Close button in header - one click to exit
-- 🪟 Minimize/Maximize buttons - standard Windows controls
-- 🔇 Silent launch - no PowerShell windows visible
-- 🎨 Smooth hover effects on tiles
-- 📱 Responsive layout with scrolling
+- Close button in header - one click to exit
+- Minimize/Maximize buttons - standard Windows controls
+- Silent launch - no PowerShell windows visible
+- Smooth hover effects on tiles
+- Responsive layout with scrolling
 
 ## Deployment Options
 
@@ -112,14 +112,14 @@ Use `DeployPortal.ps1` with SCCM, Group Policy, or PDQ Deploy
 
 ## Security & Compliance
 
-✅ No external dependencies or downloads  
-✅ No internet connectivity required  
-✅ All code is local and reviewable  
-✅ No registry modifications  
-✅ No PowerShell execution policy bypass needed  
-✅ Compatible with antivirus and endpoint protection  
-✅ Domain policy compliant  
-✅ Fully auditable code with SYNOPSIS documentation  
+- No external dependencies or downloads  
+- No internet connectivity required  
+- All code is local and reviewable  
+- No registry modifications  
+- No PowerShell execution policy bypass needed  
+- Compatible with antivirus and endpoint protection  
+- Domain policy compliant  
+- Fully auditable code with SYNOPSIS documentation  
 
 ## Screenshots
 
