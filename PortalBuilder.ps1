@@ -436,8 +436,8 @@ function Show-AddProgramDialog {
     
     # OK Button
     $btnOK = New-Object System.Windows.Forms.Button
-    $btnOK.Location = New-Object System.Drawing.Point(290, 190)
-    $btnOK.Size = New-Object System.Drawing.Size(80, 30)
+    $btnOK.Location = New-Object System.Drawing.Point(270, 190)
+    $btnOK.Size = New-Object System.Drawing.Size(85, 30)
     $btnOK.Text = "Add"
     $btnOK.Add_Click({
         if ($txtName.Text -and $txtPath.Text) {
@@ -459,8 +459,8 @@ function Show-AddProgramDialog {
     
     # Cancel Button
     $btnCancel = New-Object System.Windows.Forms.Button
-    $btnCancel.Location = New-Object System.Drawing.Point(380, 190)
-    $btnCancel.Size = New-Object System.Drawing.Size(80, 30)
+    $btnCancel.Location = New-Object System.Drawing.Point(375, 190)
+    $btnCancel.Size = New-Object System.Drawing.Size(85, 30)
     $btnCancel.Text = "Cancel"
     $btnCancel.DialogResult = "Cancel"
     $addForm.Controls.Add($btnCancel)
@@ -554,8 +554,8 @@ function Show-AddURLDialog {
     
     # OK Button
     $btnOK = New-Object System.Windows.Forms.Button
-    $btnOK.Location = New-Object System.Drawing.Point(290, 180)
-    $btnOK.Size = New-Object System.Drawing.Size(80, 30)
+    $btnOK.Location = New-Object System.Drawing.Point(270, 180)
+    $btnOK.Size = New-Object System.Drawing.Size(85, 30)
     $btnOK.Text = "Add"
     $btnOK.Add_Click({
         if ($txtName.Text -and $txtURL.Text) {
@@ -577,8 +577,8 @@ function Show-AddURLDialog {
     
     # Cancel Button
     $btnCancel = New-Object System.Windows.Forms.Button
-    $btnCancel.Location = New-Object System.Drawing.Point(380, 180)
-    $btnCancel.Size = New-Object System.Drawing.Size(80, 30)
+    $btnCancel.Location = New-Object System.Drawing.Point(375, 180)
+    $btnCancel.Size = New-Object System.Drawing.Size(85, 30)
     $btnCancel.Text = "Cancel"
     $btnCancel.DialogResult = "Cancel"
     $urlForm.Controls.Add($btnCancel)
