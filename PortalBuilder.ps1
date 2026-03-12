@@ -249,7 +249,7 @@ function Show-CustomizationDialog {
         $openFile = New-Object System.Windows.Forms.OpenFileDialog
         $openFile.Filter = "Image Files|*.png;*.jpg;*.jpeg;*.bmp;*.ico"
         $openFile.Title = "Select Logo Image"
-        if ($openFile.ShowDialog() -eq "OK") {
+        if ($openFile.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
             $txtLogo.Text = $openFile.FileName
         }
     })
@@ -279,7 +279,7 @@ function Show-CustomizationDialog {
         $openFile = New-Object System.Windows.Forms.OpenFileDialog
         $openFile.Filter = "Icon Files|*.ico;*.png;*.jpg"
         $openFile.Title = "Select Desktop Shortcut Icon"
-        if ($openFile.ShowDialog() -eq "OK") {
+        if ($openFile.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
             $txtDesktopIcon.Text = $openFile.FileName
         }
     })
@@ -335,7 +335,7 @@ function Show-CustomizationDialog {
         $openFile = New-Object System.Windows.Forms.OpenFileDialog
         $openFile.Filter = "Icon Files|*.ico;*.png;*.jpg;*.exe"
         $openFile.Title = "Select Builder Window Icon"
-        if ($openFile.ShowDialog() -eq "OK") {
+        if ($openFile.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
             $txtBuilderIcon.Text = $openFile.FileName
         }
     })
@@ -482,7 +482,7 @@ function Show-AddProgramDialog {
         $openFile = New-Object System.Windows.Forms.OpenFileDialog
         $openFile.Filter = "Executable Files|*.exe;*.bat;*.cmd|All Files|*.*"
         $openFile.Title = "Select Program"
-        if ($openFile.ShowDialog() -eq "OK") {
+        if ($openFile.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
             $txtPath.Text = $openFile.FileName
             $txtPath.ForeColor = [System.Drawing.Color]::Black
         }
@@ -523,7 +523,7 @@ function Show-AddProgramDialog {
         $openFile = New-Object System.Windows.Forms.OpenFileDialog
         $openFile.Filter = "Icon Files|*.ico;*.png;*.jpg;*.exe"
         $openFile.Title = "Select Icon"
-        if ($openFile.ShowDialog() -eq "OK") {
+        if ($openFile.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
             $txtIcon.Text = $openFile.FileName
         }
     })
@@ -535,21 +535,31 @@ function Show-AddProgramDialog {
     $btnOK.Size = New-Object System.Drawing.Size(85, 30)
     $btnOK.Text = "Add"
     $btnOK.Add_Click({
+        $nameText = $txtName.Text.Trim()
         $pathText = $txtPath.Text.Trim()
-        if ($txtName.Text -and $pathText -and $pathText -ne "C:\Path\To\Program.exe") {
-            $addForm.Tag = [PSCustomObject]@{
-                Name = $txtName.Text
-                Path = $pathText
-                Type = "Program"
-                Category = $txtCategory.Text
-                IconPath = $txtIcon.Text
-            }
-            $addForm.DialogResult = "OK"
-            $addForm.Close()
+        
+        # Validate inputs
+        if (-not $nameText) {
+            [System.Windows.Forms.MessageBox]::Show("Please enter a program name.", "Missing Name", "OK", "Warning")
+            return
         }
-        else {
-            [System.Windows.Forms.MessageBox]::Show("Please provide program name and path.", "Validation", "OK", "Warning")
+        
+        if (-not $pathText -or $pathText -eq "C:\Path\To\Program.exe") {
+            [System.Windows.Forms.MessageBox]::Show("Please enter a valid program path.`n`nNote: Path does NOT need to exist on this PC - it can be a path where the program will be on target PCs.", "Missing Path", "OK", "Warning")
+            return
         }
+        
+        # Create the program object
+        $addForm.Tag = [PSCustomObject]@{
+            Name = $nameText
+            Path = $pathText
+            Type = "Program"
+            Category = $txtCategory.Text.Trim()
+            IconPath = $txtIcon.Text.Trim()
+        }
+        
+        $addForm.DialogResult = "OK"
+        $addForm.Close()
     })
     $addForm.Controls.Add($btnOK)
     
@@ -564,9 +574,13 @@ function Show-AddProgramDialog {
     $addForm.AcceptButton = $btnOK
     $addForm.CancelButton = $btnCancel
     
-    if ($addForm.ShowDialog() -eq "OK") {
+    $result = $addForm.ShowDialog()
+    
+    if ($result -eq [System.Windows.Forms.DialogResult]::OK -and $addForm.Tag) {
+        $addForm.Dispose()
         return $addForm.Tag
     }
+    $addForm.Dispose()
     return $null
 }
 
@@ -606,6 +620,19 @@ function Show-AddURLDialog {
     $txtURL.Location = New-Object System.Drawing.Point(120, 60)
     $txtURL.Size = New-Object System.Drawing.Size(350, 20)
     $txtURL.Text = "https://"
+    $txtURL.ForeColor = [System.Drawing.Color]::Gray
+    $txtURL.Add_GotFocus({
+        if ($this.Text -eq "https://") {
+            $this.Text = ""
+            $this.ForeColor = [System.Drawing.Color]::Black
+        }
+    })
+    $txtURL.Add_LostFocus({
+        if ($this.Text.Trim() -eq "") {
+            $this.Text = "https://"
+            $this.ForeColor = [System.Drawing.Color]::Gray
+        }
+    })
     $urlForm.Controls.Add($txtURL)
     
     # Category
@@ -642,7 +669,7 @@ function Show-AddURLDialog {
         $openFile = New-Object System.Windows.Forms.OpenFileDialog
         $openFile.Filter = "Icon Files|*.ico;*.png;*.jpg"
         $openFile.Title = "Select Icon"
-        if ($openFile.ShowDialog() -eq "OK") {
+        if ($openFile.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
             $txtIcon.Text = $openFile.FileName
         }
     })
@@ -654,20 +681,31 @@ function Show-AddURLDialog {
     $btnOK.Size = New-Object System.Drawing.Size(85, 30)
     $btnOK.Text = "Add"
     $btnOK.Add_Click({
-        if ($txtName.Text -and $txtURL.Text) {
-            $urlForm.Tag = [PSCustomObject]@{
-                Name = $txtName.Text
-                Path = $txtURL.Text
-                Type = "URL"
-                Category = $txtCategory.Text
-                IconPath = $txtIcon.Text
-            }
-            $urlForm.DialogResult = "OK"
-            $urlForm.Close()
+        $nameText = $txtName.Text.Trim()
+        $urlText = $txtURL.Text.Trim()
+        
+        # Validate inputs
+        if (-not $nameText) {
+            [System.Windows.Forms.MessageBox]::Show("Please enter a display name for the website.", "Missing Name", "OK", "Warning")
+            return
         }
-        else {
-            [System.Windows.Forms.MessageBox]::Show("Please provide name and URL.", "Validation", "OK", "Warning")
+        
+        if (-not $urlText -or $urlText -eq "https://") {
+            [System.Windows.Forms.MessageBox]::Show("Please enter a valid URL (e.g., https://example.com)", "Missing URL", "OK", "Warning")
+            return
         }
+        
+        # Create the URL object
+        $urlForm.Tag = [PSCustomObject]@{
+            Name = $nameText
+            Path = $urlText
+            Type = "URL"
+            Category = $txtCategory.Text.Trim()
+            IconPath = $txtIcon.Text.Trim()
+        }
+        
+        $urlForm.DialogResult = "OK"
+        $urlForm.Close()
     })
     $urlForm.Controls.Add($btnOK)
     
@@ -682,9 +720,13 @@ function Show-AddURLDialog {
     $urlForm.AcceptButton = $btnOK
     $urlForm.CancelButton = $btnCancel
     
-    if ($urlForm.ShowDialog() -eq "OK") {
+    $result = $urlForm.ShowDialog()
+    
+    if ($result -eq [System.Windows.Forms.DialogResult]::OK -and $urlForm.Tag) {
+        $urlForm.Dispose()
         return $urlForm.Tag
     }
+    $urlForm.Dispose()
     return $null
 }
 
@@ -751,6 +793,140 @@ function Refresh-ItemList {
 }
 
 # ============================================================================
+# FUNCTION: Compile-ExeLauncher
+# PURPOSE: Compiles a C# launcher to .exe using built-in CSC compiler
+# ============================================================================
+function Compile-ExeLauncher {
+    param(
+        [string]$OutputPath,
+        [string]$ExeName = "LaunchPortal.exe"
+    )
+    
+    try {
+        # C# source code for the launcher
+        $csharpCode = @'
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Windows.Forms;
+
+namespace PortalLauncher
+{
+    class Program
+    {
+        [STAThread]
+        static void Main()
+        {
+            try
+            {
+                // Get the directory where this exe is located
+                string appDir = AppDomain.CurrentDomain.BaseDirectory;
+                string scriptPath = Path.Combine(appDir, "portal.ps1");
+                
+                // Verify script exists
+                if (!File.Exists(scriptPath))
+                {
+                    MessageBox.Show(
+                        "Error: portal.ps1 not found in application directory.\n\nPath: " + scriptPath,
+                        "Portal Launch Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error
+                    );
+                    return;
+                }
+                
+                // Configure PowerShell process
+                ProcessStartInfo psi = new ProcessStartInfo
+                {
+                    FileName = "powershell.exe",
+                    Arguments = string.Format(
+                        "-WindowStyle Hidden -NoProfile -ExecutionPolicy Bypass -Command \"& {{Set-Location '{0}'; & '{1}'}}\"",
+                        appDir.TrimEnd('\\'),
+                        scriptPath
+                    ),
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    WorkingDirectory = appDir
+                };
+                
+                // Launch the portal
+                Process.Start(psi);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Failed to launch Application Portal:\n\n" + ex.Message,
+                    "Portal Launch Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+            }
+        }
+    }
+}
+'@
+        
+        # Save C# source to temp file
+        $tempCs = Join-Path $OutputPath "PortalLauncher.cs"
+        $csharpCode | Set-Content $tempCs -Encoding UTF8
+        
+        # Find the C# compiler (csc.exe) - included with .NET Framework
+        $cscPath = $null
+        $netFrameworkPaths = @(
+            "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe",
+            "C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe",
+            "C:\Windows\Microsoft.NET\Framework64\v3.5\csc.exe",
+            "C:\Windows\Microsoft.NET\Framework\v3.5\csc.exe"
+        )
+        
+        foreach ($path in $netFrameworkPaths) {
+            if (Test-Path $path) {
+                $cscPath = $path
+                break
+            }
+        }
+        
+        if (-not $cscPath) {
+            Write-Warning "C# compiler (csc.exe) not found. .exe launcher will not be created."
+            Write-Warning "Users can still use .bat or .vbs launcher files."
+            Remove-Item $tempCs -ErrorAction SilentlyContinue
+            return $false
+        }
+        
+        # Compile the C# code to .exe
+        $exePath = Join-Path $OutputPath $ExeName
+        $compileArgs = @(
+            "/target:winexe",
+            "/out:`"$exePath`"",
+            "/reference:System.Windows.Forms.dll",
+            "/reference:System.Drawing.dll",
+            "/optimize+",
+            "/nologo",
+            "`"$tempCs`""
+        )
+        
+        $compileProcess = Start-Process -FilePath $cscPath -ArgumentList $compileArgs -Wait -PassThru -WindowStyle Hidden
+        
+        # Clean up temp C# file
+        Remove-Item $tempCs -ErrorAction SilentlyContinue
+        
+        # Check if compilation succeeded
+        if ($compileProcess.ExitCode -eq 0 -and (Test-Path $exePath)) {
+            Write-Host "Compiled $ExeName successfully" -ForegroundColor Green
+            return $true
+        }
+        else {
+            Write-Warning "Failed to compile .exe launcher. Exit code: $($compileProcess.ExitCode)"
+            return $false
+        }
+    }
+    catch {
+        Write-Warning "Error compiling .exe launcher: $_"
+        return $false
+    }
+}
+
+# ============================================================================
 # FUNCTION: Build-PortalPackage
 # PURPOSE: Generates the complete portal deployment package
 # ============================================================================
@@ -767,7 +943,7 @@ function Build-PortalPackage {
             "YesNo",
             "Question"
         )
-        if ($confirm -ne "Yes") {
+        if ($confirm -ne [System.Windows.Forms.DialogResult]::Yes) {
             return $false
         }
         Remove-Item $portalPath -Recurse -Force
@@ -861,17 +1037,32 @@ if (-not (Test-Path $userPrefsPath)) {
 # Load user preferences or create default
 if (Test-Path $userPrefsFile) {
     try {
-        $userPrefs = Get-Content $userPrefsFile | ConvertFrom-Json
+        $script:userPrefs = Get-Content $userPrefsFile | ConvertFrom-Json
+        
+        # Ensure arrays are properly formatted (ConvertFrom-Json can convert single items to strings)
+        if ($script:userPrefs.HiddenApps -is [string]) {
+            $script:userPrefs.HiddenApps = @($script:userPrefs.HiddenApps)
+        }
+        elseif ($null -eq $script:userPrefs.HiddenApps) {
+            $script:userPrefs.HiddenApps = @()
+        }
+        
+        if ($script:userPrefs.Favorites -is [string]) {
+            $script:userPrefs.Favorites = @($script:userPrefs.Favorites)
+        }
+        elseif ($null -eq $script:userPrefs.Favorites) {
+            $script:userPrefs.Favorites = @()
+        }
     }
     catch {
-        $userPrefs = @{
+        $script:userPrefs = @{
             HiddenApps = @()
             Favorites = @()
         }
     }
 }
 else {
-    $userPrefs = @{
+    $script:userPrefs = @{
         HiddenApps = @()
         Favorites = @()
     }
@@ -879,7 +1070,41 @@ else {
 
 # Function to save user preferences
 function Save-UserPreferences {
-    $userPrefs | ConvertTo-Json -Depth 3 | Set-Content $userPrefsFile -Encoding UTF8
+    # Ensure arrays are properly formatted before saving
+    [PSCustomObject]@{
+        HiddenApps = @($script:userPrefs.HiddenApps)
+        Favorites = @($script:userPrefs.Favorites)
+    } | ConvertTo-Json -Depth 3 | Set-Content $userPrefsFile -Encoding UTF8
+}
+
+# Function to reload user preferences from file
+function Load-UserPreferences {
+    if (Test-Path $userPrefsFile) {
+        try {
+            $script:userPrefs = Get-Content $userPrefsFile | ConvertFrom-Json
+            
+            # Ensure arrays are properly formatted
+            if ($script:userPrefs.HiddenApps -is [string]) {
+                $script:userPrefs.HiddenApps = @($script:userPrefs.HiddenApps)
+            }
+            elseif ($null -eq $script:userPrefs.HiddenApps) {
+                $script:userPrefs.HiddenApps = @()
+            }
+            
+            if ($script:userPrefs.Favorites -is [string]) {
+                $script:userPrefs.Favorites = @($script:userPrefs.Favorites)
+            }
+            elseif ($null -eq $script:userPrefs.Favorites) {
+                $script:userPrefs.Favorites = @()
+            }
+            
+            Write-Host "DEBUG: Preferences reloaded from file" -ForegroundColor Green
+            Write-Host "DEBUG: Reloaded Favorites: $($script:userPrefs.Favorites -join ', ')" -ForegroundColor Cyan
+        }
+        catch {
+            Write-Host "DEBUG: Error reloading preferences" -ForegroundColor Red
+        }
+    }
 }
 
 # Parse colors from configuration
@@ -1019,13 +1244,31 @@ if ($config.ShowUserInfo -or $config.ShowTime) {
     }
     $infoLabel.Text = $infoText
     $headerPanel.Controls.Add($infoLabel)
+    
+    # Timer to update time every minute
+    if ($config.ShowTime) {
+        $timeUpdateTimer = New-Object System.Windows.Forms.Timer
+        $timeUpdateTimer.Interval = 60000  # Update every minute
+        $timeUpdateTimer.Add_Tick({
+            $updatedText = ""
+            if ($config.ShowUserInfo) {
+                $updatedText = "Workstation: $env:COMPUTERNAME"
+            }
+            if ($config.ShowTime) {
+                if ($updatedText) { $updatedText += " | " }
+                $updatedText += "Time: " + (Get-Date -Format "HH:mm")
+            }
+            $infoLabel.Text = $updatedText
+        })
+        $timeUpdateTimer.Start()
+    }
 }
 
 # Settings button in header (anchored to right, left of close button)
 $btnSettings = New-Object System.Windows.Forms.Button
-$btnSettings.Text = "⚙"
-$btnSettings.Size = New-Object System.Drawing.Size(45, 45)
-$btnSettings.Location = New-Object System.Drawing.Point(($mainForm.ClientSize.Width - 105), 8)
+$btnSettings.Text = "Settings"
+$btnSettings.Size = New-Object System.Drawing.Size(75, 45)
+$btnSettings.Location = New-Object System.Drawing.Point(($mainForm.ClientSize.Width - 135), 8)
 $btnSettings.Anchor = "Top,Right"
 $btnSettings.BackColor = $primaryColor
 $btnSettings.ForeColor = $textColor
@@ -1069,8 +1312,8 @@ if ($items.Count -eq 0) {
 # Function to show user preferences dialog
 function Show-UserPreferences {
     $prefsForm = New-Object System.Windows.Forms.Form
-    $prefsForm.Text = "My Portal Settings"
-    $prefsForm.Size = New-Object System.Drawing.Size(600, 500)
+    $prefsForm.Text = "My Portal Settings - Manage Visibility"
+    $prefsForm.Size = New-Object System.Drawing.Size(600, 510)
     $prefsForm.StartPosition = "CenterParent"
     $prefsForm.FormBorderStyle = "FixedDialog"
     $prefsForm.MaximizeBox = $false
@@ -1085,25 +1328,20 @@ function Show-UserPreferences {
     
     # List of apps with checkboxes
     $lstApps = New-Object System.Windows.Forms.ListView
-    $lstApps.Location = New-Object System.Drawing.Point(10, 50)
-    $lstApps.Size = New-Object System.Drawing.Size(560, 300)
+    $lstApps.Location = New-Object System.Drawing.Point(10, 60)
+    $lstApps.Size = New-Object System.Drawing.Size(560, 280)
     $lstApps.View = "Details"
     $lstApps.CheckBoxes = $true
     $lstApps.FullRowSelect = $true
     $lstApps.GridLines = $true
-    [void]$lstApps.Columns.Add("Application", 350)
-    [void]$lstApps.Columns.Add("Type", 80)
-    [void]$lstApps.Columns.Add("Favorite", 80)
+    [void]$lstApps.Columns.Add("Application", 400)
+    [void]$lstApps.Columns.Add("Type", 130)
     $prefsForm.Controls.Add($lstApps)
     
     # Populate with all items
     foreach ($item in $items) {
         $listItem = New-Object System.Windows.Forms.ListViewItem($item.Name)
         [void]$listItem.SubItems.Add($item.Type)
-        
-        # Check if favorite
-        $isFavorite = $item.Name -in $userPrefs.Favorites
-        [void]$listItem.SubItems.Add($(if ($isFavorite) { "★" } else { "" }))
         
         # Check if visible (not hidden)
         $isVisible = $item.Name -notin $userPrefs.HiddenApps
@@ -1112,56 +1350,47 @@ function Show-UserPreferences {
         [void]$lstApps.Items.Add($listItem)
     }
     
-    # Favorite button
-    $btnFavorite = New-Object System.Windows.Forms.Button
-    $btnFavorite.Text = "Toggle Favorite ★"
-    $btnFavorite.Location = New-Object System.Drawing.Point(10, 360)
-    $btnFavorite.Size = New-Object System.Drawing.Size(140, 30)
-    $btnFavorite.Add_Click({
-        if ($lstApps.SelectedItems.Count -gt 0) {
-            $selectedItem = $lstApps.SelectedItems[0]
-            $appName = $selectedItem.Tag.Name
-            
-            if ($appName -in $userPrefs.Favorites) {
-                $userPrefs.Favorites = @($userPrefs.Favorites | Where-Object { $_ -ne $appName })
-                $selectedItem.SubItems[2].Text = ""
-            }
-            else {
-                $userPrefs.Favorites += $appName
-                $selectedItem.SubItems[2].Text = "★"
-            }
-        }
-    })
-    $prefsForm.Controls.Add($btnFavorite)
+    # Selection info label
+    $lblSelection = New-Object System.Windows.Forms.Label
+    $lblSelection.Text = "Select an app from the list, then click the button below"
+    $lblSelection.Location = New-Object System.Drawing.Point(10, 345)
+    $lblSelection.Size = New-Object System.Drawing.Size(560, 20)
+    $lblSelection.ForeColor = [System.Drawing.Color]::FromArgb(100, 100, 100)
+    $lblSelection.Font = New-Object System.Drawing.Font($config.FontName, 9)
+    $prefsForm.Controls.Add($lblSelection)
     
     # Reset button
     $btnReset = New-Object System.Windows.Forms.Button
-    $btnReset.Text = "Reset to Default"
-    $btnReset.Location = New-Object System.Drawing.Point(160, 360)
-    $btnReset.Size = New-Object System.Drawing.Size(120, 30)
+    $btnReset.Text = "Reset All to Default"
+    $btnReset.Location = New-Object System.Drawing.Point(20, 380)
+    $btnReset.Size = New-Object System.Drawing.Size(160, 35)
+    $btnReset.Font = New-Object System.Drawing.Font($config.FontName, 9)
     $btnReset.Add_Click({
         $confirm = [System.Windows.Forms.MessageBox]::Show(
-            "Reset all preferences? All apps will be shown and favorites cleared.",
+            "Reset all preferences? All apps will be shown.",
             "Confirm Reset",
             "YesNo",
             "Question"
         )
-        if ($confirm -eq "Yes") {
+        if ($confirm -eq [System.Windows.Forms.DialogResult]::Yes) {
             foreach ($item in $lstApps.Items) {
                 $item.Checked = $true
-                $item.SubItems[2].Text = ""
+                $item.BackColor = [System.Drawing.Color]::White
             }
             $userPrefs.HiddenApps = @()
             $userPrefs.Favorites = @()
+            $lblSelection.Text = "All preferences reset!"
+            $lblSelection.ForeColor = [System.Drawing.Color]::FromArgb(50, 150, 50)
         }
     })
     $prefsForm.Controls.Add($btnReset)
     
     # OK Button
     $btnOK = New-Object System.Windows.Forms.Button
-    $btnOK.Text = "Save"
-    $btnOK.Location = New-Object System.Drawing.Point(390, 410)
-    $btnOK.Size = New-Object System.Drawing.Size(85, 30)
+    $btnOK.Text = "Save Changes"
+    $btnOK.Location = New-Object System.Drawing.Point(365, 380)
+    $btnOK.Size = New-Object System.Drawing.Size(110, 35)
+    $btnOK.Font = New-Object System.Drawing.Font($config.FontName, 9)
     $btnOK.DialogResult = "OK"
     $btnOK.Add_Click({
         # Update hidden apps based on checkboxes
@@ -1172,22 +1401,40 @@ function Show-UserPreferences {
             }
         }
         
-        # Save preferences
+        # Debug: Log what's being saved
+        Write-Host "DEBUG: Saving preferences..." -ForegroundColor Cyan
+        Write-Host "DEBUG: Favorites to save: $($userPrefs.Favorites -join ', ')" -ForegroundColor Cyan
+        Write-Host "DEBUG: Favorites count: $($userPrefs.Favorites.Count)" -ForegroundColor Cyan
+        
+        # Save preferences to file
         Save-UserPreferences
         
-        # Refresh the portal display
-        Refresh-PortalDisplay
+        Write-Host "DEBUG: Preferences saved to file" -ForegroundColor Green
         
+        # Reload preferences from file to ensure portal uses latest data
+        Load-UserPreferences
+        
+        # Close dialog first, then refresh
         $prefsForm.Close()
+        
+        # Refresh the portal display after dialog closes
+        Start-Sleep -Milliseconds 100
+        Refresh-PortalDisplay
     })
     $prefsForm.Controls.Add($btnOK)
     
     # Cancel Button
     $btnCancel = New-Object System.Windows.Forms.Button
     $btnCancel.Text = "Cancel"
-    $btnCancel.Location = New-Object System.Drawing.Point(485, 410)
-    $btnCancel.Size = New-Object System.Drawing.Size(85, 30)
+    $btnCancel.Location = New-Object System.Drawing.Point(485, 380)
+    $btnCancel.Size = New-Object System.Drawing.Size(90, 35)
+    $btnCancel.Font = New-Object System.Drawing.Font($config.FontName, 9)
     $btnCancel.DialogResult = "Cancel"
+    $btnCancel.Add_Click({
+        # Close without saving changes
+        Write-Host "DEBUG: Cancel clicked - closing without saving" -ForegroundColor Yellow
+        $prefsForm.Close()
+    })
     $prefsForm.Controls.Add($btnCancel)
     
     $prefsForm.AcceptButton = $btnOK
@@ -1202,6 +1449,13 @@ $btnSettings.Add_Click({ Show-UserPreferences })
 function Create-TileButton {
     param($Item)
     
+    # Create a container panel for the tile
+    $tileContainer = New-Object System.Windows.Forms.Panel
+    $tileContainer.Size = New-Object System.Drawing.Size(130, 140)
+    $tileContainer.Margin = New-Object System.Windows.Forms.Padding(8, 8, 8, 8)
+    $tileContainer.BackColor = [System.Drawing.Color]::Transparent
+    
+    # Main button
     $button = New-Object System.Windows.Forms.Button
     $button.Size = New-Object System.Drawing.Size(130, 140)
     $button.BackColor = [System.Drawing.Color]::White
@@ -1211,12 +1465,12 @@ function Create-TileButton {
     $button.FlatAppearance.BorderColor = [System.Drawing.Color]::FromArgb(220, 220, 220)
     $button.TextAlign = "BottomCenter"
     $button.Font = New-Object System.Drawing.Font($config.FontName, 8.5, [System.Drawing.FontStyle]::Regular)
-    $button.Margin = New-Object System.Windows.Forms.Padding(8, 8, 8, 8)
     $button.Padding = New-Object System.Windows.Forms.Padding(5, 5, 5, 8)
     $button.Cursor = "Hand"
     $button.TabStop = $false
     $button.ImageAlign = "TopCenter"
     $button.TextImageRelation = "ImageAboveText"
+    $button.Location = New-Object System.Drawing.Point(0, 0)
     
     # Set button text - compact name display
     if ($Item.Name.Length -gt 18) {
@@ -1280,7 +1534,7 @@ function Create-TileButton {
         $this.FlatAppearance.BorderColor = [System.Drawing.Color]::FromArgb(220, 220, 220)
     })
     
-    # Click action
+    # Click action - launch program
     $button.Add_Click({
         $itemData = $this.Tag
         
@@ -1303,8 +1557,48 @@ function Create-TileButton {
     })
     
     $button.Tag = $Item
+    $tileContainer.Controls.Add($button)
     
-    return $button
+    # Star button for marking as favorite (top-right corner)
+    $btnStar = New-Object System.Windows.Forms.Button
+    $btnStar.Size = New-Object System.Drawing.Size(22, 22)
+    $btnStar.Location = New-Object System.Drawing.Point(108, 2)
+    $btnStar.BackColor = [System.Drawing.Color]::Transparent
+    $btnStar.ForeColor = [System.Drawing.Color]::FromArgb(184, 134, 11)
+    $btnStar.FlatStyle = "Flat"
+    $btnStar.FlatAppearance.BorderSize = 0
+    $btnStar.FlatAppearance.MouseDownBackColor = [System.Drawing.Color]::Transparent
+    $btnStar.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::Transparent
+    $btnStar.Font = New-Object System.Drawing.Font($config.FontName, 14, [System.Drawing.FontStyle]::Bold)
+    $btnStar.Cursor = "Hand"
+    $btnStar.TabStop = $false
+    $btnStar.Tag = $Item.Name
+    
+    # Update star appearance based on whether item is favorited (use trimmed names for comparison)
+    $normalizedFavorites = @($userPrefs.Favorites | ForEach-Object { $_.Trim() })
+    $isFavorite = $Item.Name.Trim() -in $normalizedFavorites
+    $btnStar.Text = if ($isFavorite) { "★" } else { "☆" }
+    
+    $btnStar.Add_Click({
+        [System.Windows.Forms.MessageBox]::Show(
+            "To manage favorites, please use the Settings menu.`n`nClick the star icon to access portal preferences.",
+            "Favorites",
+            "OK",
+            "Information"
+        ) | Out-Null
+    })
+    
+    $btnStar.Add_MouseEnter({
+        $this.BackColor = [System.Drawing.Color]::FromArgb(255, 248, 220)
+    })
+    
+    $btnStar.Add_MouseLeave({
+        $this.BackColor = [System.Drawing.Color]::Transparent
+    })
+    
+    $tileContainer.Controls.Add($btnStar)
+    
+    return $tileContainer
 }
 
 # Function to refresh tiles
@@ -1314,16 +1608,39 @@ function Refresh-Tiles {
     $searchText = $searchBox.Text.Trim()
     $selectedCategory = $categoryCombo.SelectedItem
     
+    # Debug: Log current favorites
+    Write-Host "DEBUG: Current Favorites count: $($userPrefs.Favorites.Count)" -ForegroundColor Cyan
+    Write-Host "DEBUG: Favorite items: $($userPrefs.Favorites -join ', ')" -ForegroundColor Cyan
+    Write-Host "DEBUG: Total items available: $($items.Count)" -ForegroundColor Cyan
+    
     # Start with all items
     $filteredItems = $items
     
-    # Filter out hidden apps (user preference)
-    $filteredItems = $filteredItems | Where-Object { $_.Name -notin $userPrefs.HiddenApps }
+    # Filter out hidden apps (user preference) - trim names for comparison
+    $filteredItems = $filteredItems | Where-Object { 
+        $_.Name.Trim() -notin @($userPrefs.HiddenApps | ForEach-Object { $_.Trim() })
+    }
+    
+    # Separate favorites first (before category/search filtering)
+    # This ensures favorites are ALWAYS shown regardless of filters
+    # Normalize names for comparison
+    $normalizedFavorites = @($userPrefs.Favorites | ForEach-Object { $_.Trim() })
+    $allFavorites = $filteredItems | Where-Object { $_.Name.Trim() -in $normalizedFavorites }
+    
+    Write-Host "DEBUG: Normalized favorites: $($normalizedFavorites -join ', ')" -ForegroundColor Cyan
+    Write-Host "DEBUG: Favorites found: $($allFavorites.Count)" -ForegroundColor Cyan
+    if ($allFavorites.Count -gt 0) {
+        Write-Host "DEBUG: Favorite app names: $($allFavorites.Name -join ', ')" -ForegroundColor Green
+    }
+    
+    # Apply search and category filters to non-favorite items ONLY
+    # Favorites are NOT filtered by category/search in the main list
+    $itemsForFiltering = $filteredItems | Where-Object { $_.Name.Trim() -notin $normalizedFavorites }
     
     # Apply search filter
     if ($searchText -and $searchText -ne "") {
         # Case-insensitive search in name, path, and category
-        $filteredItems = $filteredItems | Where-Object { 
+        $itemsForFiltering = $itemsForFiltering | Where-Object { 
             ($_.Name -like "*$searchText*") -or 
             ($_.Path -like "*$searchText*") -or 
             ($_.Category -like "*$searchText*")
@@ -1332,15 +1649,11 @@ function Refresh-Tiles {
     
     # Apply category filter
     if ($selectedCategory -and $selectedCategory -ne "All Categories") {
-        $filteredItems = $filteredItems | Where-Object { $_.Category -eq $selectedCategory }
+        $itemsForFiltering = $itemsForFiltering | Where-Object { $_.Category -eq $selectedCategory }
     }
     
-    # Separate favorites from regular items
-    $favoriteItems = $filteredItems | Where-Object { $_.Name -in $userPrefs.Favorites }
-    $regularItems = $filteredItems | Where-Object { $_.Name -notin $userPrefs.Favorites }
-    
-    # Show favorites first if any exist
-    if ($favoriteItems.Count -gt 0) {
+    # Show favorites first if any exist (regardless of search/category filters)
+    if ($allFavorites.Count -gt 0) {
         # Favorites section
         $favPanel = New-Object System.Windows.Forms.Panel
         $favPanel.AutoSize = $false
@@ -1364,14 +1677,14 @@ function Refresh-Tiles {
         $tilePanel.Controls.Add($favPanel)
         
         # Add favorite tiles
-        foreach ($item in $favoriteItems) {
+        foreach ($item in $allFavorites) {
             $tile = Create-TileButton -Item $item
             $tilePanel.Controls.Add($tile)
         }
     }
     
-    # Group regular items by category
-    $grouped = $regularItems | Group-Object -Property Category | Sort-Object Name
+    # Group regular items (non-favorites) by category
+    $grouped = $itemsForFiltering | Group-Object -Property Category | Sort-Object Name
     
     foreach ($group in $grouped) {
         # Category label with separator line
@@ -1471,11 +1784,25 @@ Set objFSO = Nothing
     $vbsPath = Join-Path $portalPath "LaunchPortal.vbs"
     $vbsContent | Set-Content $vbsPath -Encoding ASCII
     
+    # Compile .exe launcher (Corporate-friendly alternative to .bat/.vbs)
+    Write-Host "`nCompiling executable launcher..." -ForegroundColor Cyan
+    $exeCreated = Compile-ExeLauncher -OutputPath $portalPath -ExeName "LaunchPortal.exe"
+    
+    # Determine which launcher to use for the shortcut (prefer .exe)
+    $preferredLauncher = "LaunchPortal.vbs"
+    if ($exeCreated) {
+        $preferredLauncher = "LaunchPortal.exe"
+        Write-Host ".exe launcher created - Recommended for corporate environments" -ForegroundColor Green
+    }
+    else {
+        Write-Host "WARNING: .exe launcher not available - Using .vbs fallback" -ForegroundColor Yellow
+    }
+    
     # Create desktop shortcut
     $shell = New-Object -ComObject WScript.Shell
     $shortcutPath = Join-Path $portalPath "Application Portal.lnk"
     $shortcut = $shell.CreateShortcut($shortcutPath)
-    $shortcut.TargetPath = Join-Path $portalPath "LaunchPortal.vbs"
+    $shortcut.TargetPath = Join-Path $portalPath $preferredLauncher
     $shortcut.WorkingDirectory = $portalPath
     $shortcut.Description = "Launch Application Portal"
     
@@ -1514,8 +1841,9 @@ CONTENTS
 - config.json             : Portal configuration (colors, fonts, text)
 - items.json              : List of programs and URLs
 - Icons\                  : Custom icons and logo files
-- LaunchPortal.bat        : Batch file launcher
-- LaunchPortal.vbs        : Silent VBScript launcher
+- LaunchPortal.exe        : Executable launcher (RECOMMENDED - Corporate-friendly)
+- LaunchPortal.bat        : Batch file launcher (Alternative)
+- LaunchPortal.vbs        : Silent VBScript launcher (Alternative)
 - Application Portal.lnk  : Desktop shortcut
 - README.txt              : This file
 
@@ -1535,9 +1863,18 @@ DEPLOYMENT INSTRUCTIONS
      C:\ProgramData\Microsoft\Windows\Start Menu\Programs
 
 3. Users can launch the portal by:
-   - Double-clicking "LaunchPortal.bat"
-   - Double-clicking "LaunchPortal.vbs" (silent)
-   - Using the desktop shortcut
+   - Double-clicking "LaunchPortal.exe" (RECOMMENDED - Best for corporate environments)
+   - Double-clicking "Application Portal.lnk" shortcut
+   - Double-clicking "LaunchPortal.bat" (Alternative if .exe is blocked)
+   - Double-clicking "LaunchPortal.vbs" (Silent alternative)
+
+CORPORATE DEPLOYMENT NOTES
+---------------------------
+For environments with strict security policies:
+- LaunchPortal.exe is a compiled executable and is RECOMMENDED
+- .exe files are generally more accepted than .bat/.vbs scripts
+- The .exe launcher does not require PowerShell execution policy changes
+- All launcher options are included for maximum compatibility
 
 CUSTOMIZATION
 -------------
@@ -1550,13 +1887,17 @@ TROUBLESHOOTING
 - If icons don't display, check Icons\ folder contents
 - Portal requires .NET Framework 4.0 or higher
 - Portal requires PowerShell 3.0 or higher (pre-installed on Windows 7+)
+- If antivirus blocks .vbs/.bat, use LaunchPortal.exe instead
+- If .exe launcher is missing, rebuild on a PC with .NET Framework installed
 
 SECURITY & COMPLIANCE
 ---------------------
 - No external modules or internet downloads required
-- No ExecutionPolicy bypass needed with .bat/.vbs launchers
-- All code is local and can be reviewed
+- LaunchPortal.exe is a compiled C# executable (can be code-signed if needed)
+- No ExecutionPolicy bypass visible to end users with .exe launcher
+- All code is local and can be reviewed (portal.ps1, config.json, items.json)
 - Compatible with corporate security policies
+- Does not require administrator privileges to run
 - Does not require administrator privileges
 
 Created: $((Get-Date).ToString("yyyy-MM-dd"))
@@ -1640,10 +1981,33 @@ $toolbar.GripStyle = "Hidden"
 $btnAddProgram = New-Object System.Windows.Forms.ToolStripButton
 $btnAddProgram.Text = "Add Program"
 $btnAddProgram.Add_Click({
-    $newProgram = Show-AddProgramDialog
-    if ($newProgram) {
-        $script:AllItems += $newProgram
-        Refresh-ItemList -ListView $listView -SearchText $txtSearch.Text -ResultLabel $lblSearchResults
+    try {
+        $newProgram = Show-AddProgramDialog
+        if ($newProgram) {
+            $script:AllItems += $newProgram
+            # Clear search filter to show the newly added item
+            $txtSearch.Text = ""
+            Refresh-ItemList -ListView $listView -SearchText "" -ResultLabel $lblSearchResults
+            # Show confirmation
+            $lblStatus.Text = "Program added: $($newProgram.Name) - Total items: $($script:AllItems.Count)"
+            $lblStatus.ForeColor = [System.Drawing.Color]::Green
+            # Reset status text color after 3 seconds
+            $timer = New-Object System.Windows.Forms.Timer
+            $timer.Interval = 3000
+            $timer.Add_Tick({
+                $lblStatus.Text = "Ready - Select programs and click Build Portal Package"
+                $lblStatus.ForeColor = [System.Drawing.Color]::Black
+                $this.Stop()
+                $this.Dispose()
+            })
+            $timer.Start()
+        }
+        else {
+            # User cancelled or dialog closed without adding
+        }
+    }
+    catch {
+        [System.Windows.Forms.MessageBox]::Show("Error adding program: $_", "Error", "OK", "Error")
     }
 })
 $toolbar.Items.Add($btnAddProgram)
@@ -1651,10 +2015,33 @@ $toolbar.Items.Add($btnAddProgram)
 $btnAddURL = New-Object System.Windows.Forms.ToolStripButton
 $btnAddURL.Text = "Add URL"
 $btnAddURL.Add_Click({
-    $newURL = Show-AddURLDialog
-    if ($newURL) {
-        $script:AllItems += $newURL
-        Refresh-ItemList -ListView $listView -SearchText $txtSearch.Text -ResultLabel $lblSearchResults
+    try {
+        $newURL = Show-AddURLDialog
+        if ($newURL) {
+            $script:AllItems += $newURL
+            # Clear search filter to show the newly added item
+            $txtSearch.Text = ""
+            Refresh-ItemList -ListView $listView -SearchText "" -ResultLabel $lblSearchResults
+            # Show confirmation
+            $lblStatus.Text = "URL added: $($newURL.Name) - Total items: $($script:AllItems.Count)"
+            $lblStatus.ForeColor = [System.Drawing.Color]::Green
+            # Reset status text color after 3 seconds
+            $timer = New-Object System.Windows.Forms.Timer
+            $timer.Interval = 3000
+            $timer.Add_Tick({
+                $lblStatus.Text = "Ready - Select programs and click Build Portal Package"
+                $lblStatus.ForeColor = [System.Drawing.Color]::Black
+                $this.Stop()
+                $this.Dispose()
+            })
+            $timer.Start()
+        }
+        else {
+            # User cancelled or dialog closed without adding
+        }
+    }
+    catch {
+        [System.Windows.Forms.MessageBox]::Show("Error adding URL: $_", "Error", "OK", "Error")
     }
 })
 $toolbar.Items.Add($btnAddURL)
@@ -1696,7 +2083,7 @@ $btnRemove.Add_Click({
             "Question"
         )
         
-        if ($confirm -eq "Yes") {
+        if ($confirm -eq [System.Windows.Forms.DialogResult]::Yes) {
             $countBefore = $script:AllItems.Count
             
             # Use a different approach - keep items that are NOT in the removal list
@@ -1834,7 +2221,7 @@ $btnBuild.Add_Click({
     $folderBrowser.Description = "Select location to create portal package"
     $folderBrowser.SelectedPath = [Environment]::GetFolderPath("Desktop")
     
-    if ($folderBrowser.ShowDialog() -eq "OK") {
+    if ($folderBrowser.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
         $result = Build-PortalPackage -SelectedItems $selectedItems -OutputPath $folderBrowser.SelectedPath
         
         if ($result) {
@@ -1845,7 +2232,7 @@ $btnBuild.Add_Click({
                 "Information"
             )
             
-            if ($msgResult -eq "Yes") {
+            if ($msgResult -eq [System.Windows.Forms.DialogResult]::Yes) {
                 Start-Process $result
             }
         }
