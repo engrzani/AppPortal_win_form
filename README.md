@@ -14,24 +14,71 @@ A professional, portable Windows application launcher that allows you to create 
 - **Silent Launch** - No PowerShell windows, completely seamless user experience  
 - **No Installation Required** - Zero configuration on target PCs  
 - **No Admin Rights** - Runs with standard user permissions  
-- **No ExecutionPolicy Bypass** - Uses VBScript silent launcher  
+- **Corporate-Friendly .exe Launcher** - Compiled executable avoids .bat/.vbs security blocks  
 - **Domain Policy Compliant** - Works with corporate security policies  
 - **Professional UI** - Modern tile-based interface with search and categories  
 
 ## Files Included
 
-### Application Portal
+### Application Portal Builder
 - **PortalBuilder.ps1** - Main portal builder application
-- **RunBuilder.bat** - Batch launcher (recommended)
-- **RunBuilder.vbs** - Silent VBScript launcher
+- **RunBuilder.exe** - Executable launcher (**RECOMMENDED for corporate environments**)
+- **RunBuilder.bat** - Batch launcher (alternative)
+- **RunBuilder.vbs** - Silent VBScript launcher (alternative)
+- **CreateBuilderExe.ps1** - Script to recompile RunBuilder.exe if needed
 - **DeployPortal.ps1** - Automated deployment script for IT
+
+### Standalone EXE Build System (NEW!)
+- **BuildStandaloneExe.ps1** - Compiles to standalone .exe with no visible scripts
+- **QuickBuild.bat** - One-click build tool (easiest method)
+- **BUILD_GUIDE.md** - Complete build and deployment guide
+- **ICON_GUIDE.md** - How to create and use custom icons
 
 ### Profile Management (For Shared PCs)
 - **CleanOldProfiles.ps1** - Removes user profiles older than specified days
 - **ScheduleProfileCleanup.ps1** - Automates profile cleanup with scheduled task
 
+## 🚀 Quick Start Options
+
+### Option 1: Run the Builder Directly (Fastest)
+Double-click **`RunBuilder.exe`** to start building your portal immediately.
+
+### Option 2: Build Standalone EXE (Recommended for Distribution) 🎉 NEW!
+Create a **single standalone executable** with your custom name and icon:
+
+1. **Quick Build:** Double-click **`QuickBuild.bat`**
+   - Creates `PortalBuilder.exe` in seconds
+   - First build installs required components (1-2 minutes)
+   - Subsequent builds take 30-60 seconds
+
+2. **Custom Build with Your Branding:**
+   - Edit `QuickBuild.bat`:
+     ```batch
+     SET EXE_NAME=CompanyApps
+     SET ICON_FILE=YourIcon.ico
+     ```
+   - Run `QuickBuild.bat`
+   - Result: **`CompanyApps.exe`** with your custom icon!
+
+3. **Deploy:**
+   - Copy the single `.exe` file to any Windows PC
+   - Double-click to run - no installation needed!
+
+**Benefits:**
+- ✅ No PowerShell scripts visible (source code protected)
+- ✅ Professional custom name and icon
+- ✅ Single file distribution
+- ✅ Works on any Windows PC (no setup required)
+
+📖 **See [BUILD_GUIDE.md](BUILD_GUIDE.md) for complete standalone EXE instructions**  
+🎨 **See [ICON_GUIDE.md](ICON_GUIDE.md) for custom icon creation**
+
+---
+
 ## Documentation
 
+📖 **[BUILD_GUIDE.md](BUILD_GUIDE.md)** - How to create standalone .exe with custom name and icon  
+📖 **[ICON_GUIDE.md](ICON_GUIDE.md)** - Complete guide to creating and using custom icons  
 📖 **[USER_GUIDE.md](USER_GUIDE.md)** - Complete step-by-step instructions for building, deploying, and managing your portal
 
 ## Step-by-Step User Guide
@@ -40,7 +87,7 @@ A professional, portable Windows application launcher that allows you to create 
 
 1. **Extract the Files**
    - Extract all files from the ZIP archive to a folder (e.g., `C:\PortalBuilder`)
-   - Ensure all files are present: `PortalBuilder.ps1`, `RunBuilder.bat`, `RunBuilder.vbs`, `DeployPortal.ps1`
+   - Ensure all files are present: `PortalBuilder.ps1`, `RunBuilder.exe`, `RunBuilder.bat`, `RunBuilder.vbs`, `DeployPortal.ps1`
 
 2. **Verify System Requirements**
    - Windows 7 or higher
@@ -50,9 +97,10 @@ A professional, portable Windows application launcher that allows you to create 
 ### Step 2: Building Your First Portal
 
 1. **Launch the Portal Builder**
-   - **Method 1 (Recommended):** Double-click `RunBuilder.bat`
-   - **Method 2:** Right-click `PortalBuilder.ps1` → Run with PowerShell
-   - **Method 3:** Double-click `RunBuilder.vbs` (completely silent launch)
+   - **Method 1 (RECOMMENDED):** Double-click `RunBuilder.exe` (best for corporate PCs)
+   - **Method 2:** Double-click `RunBuilder.bat`
+   - **Method 3:** Right-click `PortalBuilder.ps1` → Run with PowerShell
+   - **Method 4:** Double-click `RunBuilder.vbs` (completely silent launch)
    - Wait a few seconds for the builder interface to appear
 
 2. **Add Programs from Your PC**

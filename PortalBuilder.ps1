@@ -402,7 +402,9 @@ function Show-CustomizationDialog {
                     $mainForm.Icon = [System.Drawing.Icon]::FromHandle($bmp.GetHicon())
                 }
             }
-        } catch { }
+        } catch {
+            Write-Warning "Failed to apply custom icon: $($_.Exception.Message)"
+        }
         
         $customForm.Close()
     })
@@ -735,7 +737,11 @@ function Show-AddURLDialog {
 # PURPOSE: Updates the displayed list based on search filter
 # ============================================================================
 function Refresh-ItemList {
-    param($ListView, $SearchText, $ResultLabel = $null)
+    param(
+        [System.Windows.Forms.ListView]$ListView,
+        [string]$SearchText,
+        [System.Windows.Forms.Label]$ResultLabel = $null
+    )
     
     # Suspend drawing
     $ListView.BeginUpdate()
@@ -931,7 +937,10 @@ namespace PortalLauncher
 # PURPOSE: Generates the complete portal deployment package
 # ============================================================================
 function Build-PortalPackage {
-    param($SelectedItems, $OutputPath)
+    param(
+        [array]$SelectedItems,
+        [string]$OutputPath
+    )
     
     # Create portal directory
     $portalPath = Join-Path $OutputPath $script:PortalFolderName
@@ -1098,11 +1107,11 @@ function Load-UserPreferences {
                 $script:userPrefs.Favorites = @()
             }
             
-            Write-Host "DEBUG: Preferences reloaded from file" -ForegroundColor Green
-            Write-Host "DEBUG: Reloaded Favorites: $($script:userPrefs.Favorites -join ', ')" -ForegroundColor Cyan
+            Write-Verbose "Preferences reloaded from file"
+            Write-Verbose "Reloaded Favorites: $($script:userPrefs.Favorites -join ', ')"
         }
         catch {
-            Write-Host "DEBUG: Error reloading preferences" -ForegroundColor Red
+            Write-Verbose "Error reloading preferences: $($_.Exception.Message)"
         }
     }
 }
@@ -1266,15 +1275,15 @@ if ($config.ShowUserInfo -or $config.ShowTime) {
 
 # Settings button in header (anchored to right, left of close button)
 $btnSettings = New-Object System.Windows.Forms.Button
-$btnSettings.Text = "Settings"
-$btnSettings.Size = New-Object System.Drawing.Size(75, 45)
-$btnSettings.Location = New-Object System.Drawing.Point(($mainForm.ClientSize.Width - 135), 8)
+$btnSettings.Text = "⚙"  # Gear icon
+$btnSettings.Size = New-Object System.Drawing.Size(45, 45)
+$btnSettings.Location = New-Object System.Drawing.Point(($mainForm.ClientSize.Width - 105), 8)
 $btnSettings.Anchor = "Top,Right"
 $btnSettings.BackColor = $primaryColor
 $btnSettings.ForeColor = $textColor
 $btnSettings.FlatStyle = "Flat"
 $btnSettings.FlatAppearance.BorderSize = 0
-$btnSettings.Font = New-Object System.Drawing.Font($config.FontName, 18, [System.Drawing.FontStyle]::Bold)
+$btnSettings.Font = New-Object System.Drawing.Font($config.FontName, 20, [System.Drawing.FontStyle]::Regular)
 $btnSettings.Cursor = "Hand"
 $btnSettings.Add_MouseEnter({ $this.BackColor = $hoverColor })
 $btnSettings.Add_MouseLeave({ $this.BackColor = $primaryColor })
@@ -1402,14 +1411,14 @@ function Show-UserPreferences {
         }
         
         # Debug: Log what's being saved
-        Write-Host "DEBUG: Saving preferences..." -ForegroundColor Cyan
-        Write-Host "DEBUG: Favorites to save: $($userPrefs.Favorites -join ', ')" -ForegroundColor Cyan
-        Write-Host "DEBUG: Favorites count: $($userPrefs.Favorites.Count)" -ForegroundColor Cyan
+        Write-Verbose "Saving preferences..."
+        Write-Verbose "Favorites to save: $($userPrefs.Favorites -join ', ')"
+        Write-Verbose "Favorites count: $($userPrefs.Favorites.Count)"
         
         # Save preferences to file
         Save-UserPreferences
         
-        Write-Host "DEBUG: Preferences saved to file" -ForegroundColor Green
+        Write-Verbose "Preferences saved to file"
         
         # Reload preferences from file to ensure portal uses latest data
         Load-UserPreferences
@@ -1432,7 +1441,7 @@ function Show-UserPreferences {
     $btnCancel.DialogResult = "Cancel"
     $btnCancel.Add_Click({
         # Close without saving changes
-        Write-Host "DEBUG: Cancel clicked - closing without saving" -ForegroundColor Yellow
+        Write-Verbose "Cancel clicked - closing without saving"
         $prefsForm.Close()
     })
     $prefsForm.Controls.Add($btnCancel)
@@ -1447,7 +1456,7 @@ $btnSettings.Add_Click({ Show-UserPreferences })
 
 # Function to create tile button
 function Create-TileButton {
-    param($Item)
+    param([PSCustomObject]$Item)
     
     # Create a container panel for the tile
     $tileContainer = New-Object System.Windows.Forms.Panel
@@ -1609,9 +1618,9 @@ function Refresh-Tiles {
     $selectedCategory = $categoryCombo.SelectedItem
     
     # Debug: Log current favorites
-    Write-Host "DEBUG: Current Favorites count: $($userPrefs.Favorites.Count)" -ForegroundColor Cyan
-    Write-Host "DEBUG: Favorite items: $($userPrefs.Favorites -join ', ')" -ForegroundColor Cyan
-    Write-Host "DEBUG: Total items available: $($items.Count)" -ForegroundColor Cyan
+    Write-Verbose "Current Favorites count: $($userPrefs.Favorites.Count)"
+    Write-Verbose "Favorite items: $($userPrefs.Favorites -join ', ')"
+    Write-Verbose "Total items available: $($items.Count)"
     
     # Start with all items
     $filteredItems = $items
@@ -1627,10 +1636,10 @@ function Refresh-Tiles {
     $normalizedFavorites = @($userPrefs.Favorites | ForEach-Object { $_.Trim() })
     $allFavorites = $filteredItems | Where-Object { $_.Name.Trim() -in $normalizedFavorites }
     
-    Write-Host "DEBUG: Normalized favorites: $($normalizedFavorites -join ', ')" -ForegroundColor Cyan
-    Write-Host "DEBUG: Favorites found: $($allFavorites.Count)" -ForegroundColor Cyan
+    Write-Verbose "Normalized favorites: $($normalizedFavorites -join ', ')"
+    Write-Verbose "Favorites found: $($allFavorites.Count)"
     if ($allFavorites.Count -gt 0) {
-        Write-Host "DEBUG: Favorite app names: $($allFavorites.Name -join ', ')" -ForegroundColor Green
+        Write-Verbose "Favorite app names: $($allFavorites.Name -join ', ')"
     }
     
     # Apply search and category filters to non-favorite items ONLY
@@ -1949,13 +1958,9 @@ try {
             $mainForm.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon($iconPath)
         }
     }
-} catch { }
-
-# Menu strip
-$menuStrip = New-Object System.Windows.Forms.MenuStrip
-
-$menuFile = New-Object System.Windows.Forms.ToolStripMenuItem
-$menuFile.Text = "File"
+} catch {
+    Write-Warning "Failed to load custom icon: $($_.Exception.Message)"
+}
 
 $menuCustomize = New-Object System.Windows.Forms.ToolStripMenuItem
 $menuCustomize.Text = "Customize Portal"
