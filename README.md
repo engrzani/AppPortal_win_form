@@ -38,12 +38,12 @@ A professional, portable Windows application launcher that allows you to create 
 - **CleanOldProfiles.ps1** - Removes user profiles older than specified days
 - **ScheduleProfileCleanup.ps1** - Automates profile cleanup with scheduled task
 
-## 🚀 Quick Start Options
+## Quick Start Options
 
 ### Option 1: Run the Builder Directly (Fastest)
 Double-click **`RunBuilder.exe`** to start building your portal immediately.
 
-### Option 2: Build Standalone EXE (Recommended for Distribution) 🎉 NEW!
+### Option 2: Build Standalone EXE (Recommended for Distribution) - NEW
 Create a **single standalone executable** with your custom name and icon:
 
 1. **Quick Build:** Double-click **`QuickBuild.bat`**
@@ -65,21 +65,21 @@ Create a **single standalone executable** with your custom name and icon:
    - Double-click to run - no installation needed!
 
 **Benefits:**
-- ✅ No PowerShell scripts visible (source code protected)
-- ✅ Professional custom name and icon
-- ✅ Single file distribution
-- ✅ Works on any Windows PC (no setup required)
+- No PowerShell scripts visible (source code protected)
+- Professional custom name and icon
+- Single file distribution
+- Works on any Windows PC (no setup required)
 
-📖 **See [BUILD_GUIDE.md](BUILD_GUIDE.md) for complete standalone EXE instructions**  
-🎨 **See [ICON_GUIDE.md](ICON_GUIDE.md) for custom icon creation**
+**See [BUILD_GUIDE.md](BUILD_GUIDE.md) for complete standalone EXE instructions**  
+**See [ICON_GUIDE.md](ICON_GUIDE.md) for custom icon creation**
 
 ---
 
 ## Documentation
 
-📖 **[BUILD_GUIDE.md](BUILD_GUIDE.md)** - How to create standalone .exe with custom name and icon  
-📖 **[ICON_GUIDE.md](ICON_GUIDE.md)** - Complete guide to creating and using custom icons  
-📖 **[USER_GUIDE.md](USER_GUIDE.md)** - Complete step-by-step instructions for building, deploying, and managing your portal
+**[BUILD_GUIDE.md](BUILD_GUIDE.md)** - How to create standalone .exe with custom name and icon  
+**[ICON_GUIDE.md](ICON_GUIDE.md)** - Complete guide to creating and using custom icons  
+**[USER_GUIDE.md](USER_GUIDE.md)** - Complete step-by-step instructions for building, deploying, and managing your portal
 
 ## Step-by-Step User Guide
 

@@ -34,6 +34,7 @@ Add-Type -AssemblyName System.Drawing
 
 $script:PortalFolderName = "ApplicationPortal"
 $script:AllItems = @()
+$script:CheckedItems = @{}  # Global tracker for checked items across searches
 $script:PortalConfig = @{
     PortalTitle = "Application Portal"
     HeaderText = "Welcome to Application Portal"
@@ -50,6 +51,8 @@ $script:PortalConfig = @{
     DesktopIconPath = ""
     BuilderTitle = "Application Portal Builder"
     BuilderIconPath = ""
+    TileFontBold = $false
+    TileIconTextGap = 8
 }
 
 # ============================================================================
@@ -109,7 +112,7 @@ function Get-InstalledPrograms {
 function Show-CustomizationDialog {
     $customForm = New-Object System.Windows.Forms.Form
     $customForm.Text = "Portal Customization"
-    $customForm.Size = New-Object System.Drawing.Size(500, 750)
+    $customForm.Size = New-Object System.Drawing.Size(500, 850)
     $customForm.StartPosition = "CenterParent"
     $customForm.FormBorderStyle = "FixedDialog"
     $customForm.MaximizeBox = $false
@@ -363,6 +366,51 @@ function Show-CustomizationDialog {
     
     $yPos += 40
     
+    # Tile Appearance Section Header
+    $lblTileSection = New-Object System.Windows.Forms.Label
+    $lblTileSection.Text = "━━━ Tile Appearance ━━━"
+    $lblTileSection.Location = New-Object System.Drawing.Point(10, $yPos)
+    $lblTileSection.Size = New-Object System.Drawing.Size(460, 20)
+    $lblTileSection.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
+    $lblTileSection.ForeColor = [System.Drawing.Color]::FromArgb(0, 122, 204)
+    $customForm.Controls.Add($lblTileSection)
+    
+    $yPos += 30
+    
+    # Tile Font Bold
+    $chkTileBold = New-Object System.Windows.Forms.CheckBox
+    $chkTileBold.Text = "Make tile text bold"
+    $chkTileBold.Location = New-Object System.Drawing.Point(10, $yPos)
+    $chkTileBold.Size = New-Object System.Drawing.Size(300, 20)
+    $chkTileBold.Checked = $script:PortalConfig.TileFontBold
+    $customForm.Controls.Add($chkTileBold)
+    
+    $yPos += 30
+    
+    # Tile Icon-Text Gap
+    $lblIconGap = New-Object System.Windows.Forms.Label
+    $lblIconGap.Text = "Icon-Text Gap (px):"
+    $lblIconGap.Location = New-Object System.Drawing.Point(10, $yPos)
+    $lblIconGap.Size = New-Object System.Drawing.Size(120, 20)
+    $customForm.Controls.Add($lblIconGap)
+    
+    $numIconGap = New-Object System.Windows.Forms.NumericUpDown
+    $numIconGap.Location = New-Object System.Drawing.Point(140, $yPos)
+    $numIconGap.Size = New-Object System.Drawing.Size(100, 20)
+    $numIconGap.Minimum = 5
+    $numIconGap.Maximum = 100
+    $numIconGap.Value = $script:PortalConfig.TileIconTextGap
+    $customForm.Controls.Add($numIconGap)
+    
+    $lblIconGapHint = New-Object System.Windows.Forms.Label
+    $lblIconGapHint.Text = "(Space between icon and text)"
+    $lblIconGapHint.Location = New-Object System.Drawing.Point(250, $yPos)
+    $lblIconGapHint.Size = New-Object System.Drawing.Size(220, 20)
+    $lblIconGapHint.ForeColor = [System.Drawing.Color]::Gray
+    $customForm.Controls.Add($lblIconGapHint)
+    
+    $yPos += 40
+    
     # OK Button
     $btnOK = New-Object System.Windows.Forms.Button
     $btnOK.Location = New-Object System.Drawing.Point(290, $yPos)
@@ -383,6 +431,8 @@ function Show-CustomizationDialog {
         $script:PortalConfig.ShowTime = $chkTime.Checked
         $script:PortalConfig.BuilderTitle = $txtBuilderTitle.Text
         $script:PortalConfig.BuilderIconPath = $txtBuilderIcon.Text
+        $script:PortalConfig.TileFontBold = $chkTileBold.Checked
+        $script:PortalConfig.TileIconTextGap = [int]$numIconGap.Value
         
         # Apply builder customizations immediately
         $mainForm.Text = $script:PortalConfig.BuilderTitle
@@ -740,8 +790,27 @@ function Refresh-ItemList {
     param(
         [System.Windows.Forms.ListView]$ListView,
         [string]$SearchText,
-        [System.Windows.Forms.Label]$ResultLabel = $null
+        [System.Windows.Forms.Label]$ResultLabel = $null,
+        [switch]$PreserveCheckedState
     )
+    
+    # Update global checked items tracker from current ListView state
+    if ($PreserveCheckedState) {
+        foreach ($item in $ListView.Items) {
+            if ($item.Tag) {
+                $key = "$($item.Tag.Name)|$($item.Tag.Path)|$($item.Tag.Type)"
+                if ($item.Checked) {
+                    $script:CheckedItems[$key] = $true
+                }
+                else {
+                    # Remove from tracked items if unchecked
+                    if ($script:CheckedItems.ContainsKey($key)) {
+                        $script:CheckedItems.Remove($key)
+                    }
+                }
+            }
+        }
+    }
     
     # Suspend drawing
     $ListView.BeginUpdate()
@@ -749,12 +818,11 @@ function Refresh-ItemList {
     
     $filtered = $script:AllItems
     if ($SearchText -and $SearchText.Trim() -ne "") {
-        # Case-insensitive search in name, path, and category
+        # Match at start of name (case-insensitive)
         $searchTerm = $SearchText.Trim()
         $filtered = $script:AllItems | Where-Object { 
-            ($_.Name -like "*$searchTerm*") -or 
-            ($_.Path -like "*$searchTerm*") -or 
-            ($_.Category -like "*$searchTerm*")
+            ($_.Name -like "$searchTerm*") -or 
+            ($_.Category -like "$searchTerm*")
         }
     }
     
@@ -770,25 +838,41 @@ function Refresh-ItemList {
         }
     }
     else {
-        # Add filtered items
+        # Add filtered items one by one to ensure proper rendering
+        $displayedCount = 0
+        
         foreach ($item in $filtered) {
-            if ($item -and $item.Name -and $item.Type -and $item.Category -and $item.Path) {
+            # Strict validation: check for non-empty values
+            if ($item -and 
+                $item.Name -and $item.Name.Trim() -ne "" -and
+                $item.Type -and $item.Type.Trim() -ne "" -and
+                $item.Category -and $item.Category.Trim() -ne "" -and
+                $item.Path -and $item.Path.Trim() -ne "") {
+                
                 $listItem = New-Object System.Windows.Forms.ListViewItem($item.Name)
-                [void]$listItem.SubItems.Add($item.Type)
-                [void]$listItem.SubItems.Add($item.Category)
-                [void]$listItem.SubItems.Add($item.Path)
+                $listItem.SubItems.Add($item.Type) | Out-Null
+                $listItem.SubItems.Add($item.Category) | Out-Null
+                $listItem.SubItems.Add($item.Path) | Out-Null
                 $listItem.Tag = $item
-                [void]$ListView.Items.Add($listItem)
+                
+                # Restore checked state from global tracker
+                $key = "$($item.Name)|$($item.Path)|$($item.Type)"
+                if ($script:CheckedItems.ContainsKey($key)) {
+                    $listItem.Checked = $true
+                }
+                
+                $ListView.Items.Add($listItem) | Out-Null
+                $displayedCount++
             }
         }
         
         if ($ResultLabel) {
             if ($SearchText.Trim() -ne "") {
-                $ResultLabel.Text = "Found $($filtered.Count) program(s)"
+                $ResultLabel.Text = "Found $displayedCount program(s)"
                 $ResultLabel.ForeColor = [System.Drawing.Color]::Green
             }
             else {
-                $ResultLabel.Text = "Showing all $($filtered.Count) program(s)"
+                $ResultLabel.Text = "Showing all $displayedCount program(s)"
                 $ResultLabel.ForeColor = [System.Drawing.Color]::Gray
             }
         }
@@ -796,6 +880,10 @@ function Refresh-ItemList {
     
     # Resume drawing
     $ListView.EndUpdate()
+    
+    # Force complete refresh to ensure all items are visible
+    $ListView.Invalidate()
+    $ListView.Update()
 }
 
 # ============================================================================
@@ -933,6 +1021,51 @@ namespace PortalLauncher
 }
 
 # ============================================================================
+# FUNCTION: Convert-ImageToIcon
+# PURPOSE: Converts an image (PNG, JPG, etc.) to ICO format
+# ============================================================================
+function Convert-ImageToIcon {
+    param(
+        [string]$SourceImagePath,
+        [string]$OutputIconPath
+    )
+    
+    try {
+        if (-not (Test-Path $SourceImagePath)) {
+            Write-Warning "Source image not found: $SourceImagePath"
+            return $false
+        }
+        
+        # Load the image
+        $img = [System.Drawing.Image]::FromFile($SourceImagePath)
+        
+        # Resize to 256x256 for best quality ICO
+        $size = 256
+        $bitmap = New-Object System.Drawing.Bitmap($size, $size)
+        $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+        $graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+        $graphics.DrawImage($img, 0, 0, $size, $size)
+        
+        # Save as ICO
+        $iconStream = New-Object System.IO.FileStream($OutputIconPath, [System.IO.FileMode]::Create)
+        $bitmap.Save($iconStream, [System.Drawing.Imaging.ImageFormat]::Icon)
+        
+        # Clean up
+        $iconStream.Close()
+        $graphics.Dispose()
+        $bitmap.Dispose()
+        $img.Dispose()
+        
+        Write-Host "Icon created: $OutputIconPath" -ForegroundColor Green
+        return $true
+    }
+    catch {
+        Write-Warning "Failed to convert image to icon: $_"
+        return $false
+    }
+}
+
+# ============================================================================
 # FUNCTION: Build-PortalPackage
 # PURPOSE: Generates the complete portal deployment package
 # ============================================================================
@@ -971,12 +1104,36 @@ function Build-PortalPackage {
         $script:PortalConfig.LogoPath = "Icons\$logoFile"
     }
     
-    # Copy desktop icon if specified
+    # Handle desktop icon - use custom icon, or default to embedded des.jpeg
     $desktopIconFile = ""
+    $scriptDir = Split-Path -Parent $PSCommandPath
+    $defaultIconSource = Join-Path $scriptDir "des.jpeg"
+    
     if ($script:PortalConfig.DesktopIconPath -and (Test-Path $script:PortalConfig.DesktopIconPath)) {
+        # Use user-specified custom icon
         $desktopIconFile = Split-Path $script:PortalConfig.DesktopIconPath -Leaf
-        Copy-Item $script:PortalConfig.DesktopIconPath (Join-Path $iconsPath $desktopIconFile) -Force
+        $targetIconPath = Join-Path $iconsPath $desktopIconFile
+        Copy-Item $script:PortalConfig.DesktopIconPath $targetIconPath -Force
         $script:PortalConfig.DesktopIconPath = "Icons\$desktopIconFile"
+        Write-Host "Desktop icon copied: $desktopIconFile" -ForegroundColor Cyan
+    }
+    elseif (Test-Path $defaultIconSource) {
+        # Use default des.jpeg icon - convert to ICO
+        Write-Host "Using default desktop icon (des.jpeg)..." -ForegroundColor Cyan
+        $defaultIconIco = Join-Path $iconsPath "PortalIcon.ico"
+        $converted = Convert-ImageToIcon -SourceImagePath $defaultIconSource -OutputIconPath $defaultIconIco
+        if ($converted) {
+            $script:PortalConfig.DesktopIconPath = "Icons\PortalIcon.ico"
+            Write-Host "Default desktop icon set: PortalIcon.ico" -ForegroundColor Green
+        }
+        else {
+            Write-Warning "Failed to convert default icon, will use Windows default"
+            $script:PortalConfig.DesktopIconPath = ""
+        }
+    }
+    else {
+        Write-Host "No desktop icon specified, using Windows default" -ForegroundColor Yellow
+        $script:PortalConfig.DesktopIconPath = ""
     }
     
     # Process items and copy custom icons
@@ -1152,7 +1309,7 @@ $tilePanel.Dock = "Fill"
 $tilePanel.AutoScroll = $true
 $tilePanel.WrapContents = $true
 $tilePanel.BackColor = [System.Drawing.Color]::FromArgb(250, 250, 250)
-$tilePanel.Padding = New-Object System.Windows.Forms.Padding(15, 25, 15, 15)
+$tilePanel.Padding = New-Object System.Windows.Forms.Padding(10, 15, 10, 50)
 $mainForm.Controls.Add($tilePanel)
 
 # Footer panel
@@ -1461,7 +1618,7 @@ function Create-TileButton {
     # Create a container panel for the tile
     $tileContainer = New-Object System.Windows.Forms.Panel
     $tileContainer.Size = New-Object System.Drawing.Size(130, 140)
-    $tileContainer.Margin = New-Object System.Windows.Forms.Padding(8, 8, 8, 8)
+    $tileContainer.Margin = New-Object System.Windows.Forms.Padding(3, 3, 3, 3)
     $tileContainer.BackColor = [System.Drawing.Color]::Transparent
     
     # Main button
@@ -1473,8 +1630,12 @@ function Create-TileButton {
     $button.FlatAppearance.BorderSize = 1
     $button.FlatAppearance.BorderColor = [System.Drawing.Color]::FromArgb(220, 220, 220)
     $button.TextAlign = "BottomCenter"
-    $button.Font = New-Object System.Drawing.Font($config.FontName, 8.5, [System.Drawing.FontStyle]::Regular)
-    $button.Padding = New-Object System.Windows.Forms.Padding(5, 5, 5, 8)
+    
+    # Use config settings for font style and spacing
+    $fontStyle = if ($config.TileFontBold) { [System.Drawing.FontStyle]::Bold } else { [System.Drawing.FontStyle]::Regular }
+    $button.Font = New-Object System.Drawing.Font($config.FontName, 8.5, $fontStyle)
+    $button.Padding = New-Object System.Windows.Forms.Padding(5, $config.TileIconTextGap, 5, 8)
+    
     $button.Cursor = "Hand"
     $button.TabStop = $false
     $button.ImageAlign = "TopCenter"
@@ -1648,11 +1809,10 @@ function Refresh-Tiles {
     
     # Apply search filter
     if ($searchText -and $searchText -ne "") {
-        # Case-insensitive search in name, path, and category
+        # Match at start of name (case-insensitive)
         $itemsForFiltering = $itemsForFiltering | Where-Object { 
-            ($_.Name -like "*$searchText*") -or 
-            ($_.Path -like "*$searchText*") -or 
-            ($_.Category -like "*$searchText*")
+            ($_.Name -like "$searchText*") -or 
+            ($_.Category -like "$searchText*")
         }
     }
     
@@ -1818,10 +1978,14 @@ Set objFSO = Nothing
     # Set custom icon if specified, otherwise use default
     if ($script:PortalConfig.DesktopIconPath) {
         $iconPath = Join-Path $portalPath $script:PortalConfig.DesktopIconPath
+        # Resolve full path and check if icon exists
         if (Test-Path $iconPath) {
-            $shortcut.IconLocation = $iconPath
+            # Use full path for icon location
+            $fullIconPath = (Resolve-Path $iconPath).Path
+            $shortcut.IconLocation = $fullIconPath + ",0"
         }
         else {
+            # Fallback to default Windows icon
             $shortcut.IconLocation = "$env:SystemRoot\System32\imageres.dll,3"
         }
     }
@@ -1922,8 +2086,20 @@ Created: $((Get-Date).ToString("yyyy-MM-dd"))
 # MAIN BUILDER FORM
 # ============================================================================
 
-# Initialize program list
-$script:AllItems = @(Get-InstalledPrograms)
+# Initialize program list with validation
+$rawItems = @(Get-InstalledPrograms)
+$validItems = [System.Collections.ArrayList]@()
+foreach ($item in $rawItems) {
+    # Only add items with all required fields (non-empty)
+    if ($item -and 
+        $item.Name -and $item.Name.Trim() -ne "" -and
+        $item.Path -and $item.Path.Trim() -ne "" -and
+        $item.Type -and $item.Type.Trim() -ne "" -and
+        $item.Category -and $item.Category.Trim() -ne "") {
+        [void]$validItems.Add($item)
+    }
+}
+$script:AllItems = $validItems | Sort-Object -Property Name
 
 # Create main form
 $mainForm = New-Object System.Windows.Forms.Form
@@ -1931,9 +2107,10 @@ $mainForm.Text = $script:PortalConfig.BuilderTitle
 $mainForm.Size = New-Object System.Drawing.Size(1000, 700)
 $mainForm.StartPosition = "CenterScreen"
 $mainForm.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+$mainForm.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::Sizable
 $mainForm.MinimizeBox = $true
 $mainForm.MaximizeBox = $true
-$mainForm.FormBorderStyle = "Sizable"
+$mainForm.WindowState = [System.Windows.Forms.FormWindowState]::Normal
 
 # Set application icon
 try {
@@ -1990,9 +2167,21 @@ $btnAddProgram.Add_Click({
         $newProgram = Show-AddProgramDialog
         if ($newProgram) {
             $script:AllItems += $newProgram
+            # Sort items alphabetically to maintain order
+            $script:AllItems = $script:AllItems | Sort-Object -Property Name
             # Clear search filter to show the newly added item
             $txtSearch.Text = ""
-            Refresh-ItemList -ListView $listView -SearchText "" -ResultLabel $lblSearchResults
+            Refresh-ItemList -ListView $listView -SearchText "" -ResultLabel $lblSearchResults -PreserveCheckedState
+            
+            # Find and select the newly added item in the list
+            foreach ($item in $listView.Items) {
+                if ($item.Tag -and $item.Tag.Name -eq $newProgram.Name -and $item.Tag.Path -eq $newProgram.Path) {
+                    $item.Selected = $true
+                    $item.EnsureVisible()
+                    break
+                }
+            }
+            
             # Show confirmation
             $lblStatus.Text = "Program added: $($newProgram.Name) - Total items: $($script:AllItems.Count)"
             $lblStatus.ForeColor = [System.Drawing.Color]::Green
@@ -2024,9 +2213,21 @@ $btnAddURL.Add_Click({
         $newURL = Show-AddURLDialog
         if ($newURL) {
             $script:AllItems += $newURL
+            # Sort items alphabetically to maintain order
+            $script:AllItems = $script:AllItems | Sort-Object -Property Name
             # Clear search filter to show the newly added item
             $txtSearch.Text = ""
-            Refresh-ItemList -ListView $listView -SearchText "" -ResultLabel $lblSearchResults
+            Refresh-ItemList -ListView $listView -SearchText "" -ResultLabel $lblSearchResults -PreserveCheckedState
+            
+            # Find and select the newly added item in the list
+            foreach ($item in $listView.Items) {
+                if ($item.Tag -and $item.Tag.Name -eq $newURL.Name -and $item.Tag.Path -eq $newURL.Path) {
+                    $item.Selected = $true
+                    $item.EnsureVisible()
+                    break
+                }
+            }
+            
             # Show confirmation
             $lblStatus.Text = "URL added: $($newURL.Name) - Total items: $($script:AllItems.Count)"
             $lblStatus.ForeColor = [System.Drawing.Color]::Green
@@ -2054,9 +2255,64 @@ $toolbar.Items.Add($btnAddURL)
 $btnRefresh = New-Object System.Windows.Forms.ToolStripButton
 $btnRefresh.Text = "Refresh Programs"
 $btnRefresh.Add_Click({
-    $script:AllItems = @(Get-InstalledPrograms)
-    Refresh-ItemList -ListView $listView -SearchText $txtSearch.Text -ResultLabel $lblSearchResults
-    [System.Windows.Forms.MessageBox]::Show("Program list refreshed.", "Info", "OK", "Information")
+    # Save manually added items (URLs and custom programs) before refresh
+    $manuallyAddedItems = @()
+    
+    # Save all URLs (always manually added)
+    $manuallyAddedItems += $script:AllItems | Where-Object { $_.Type -eq "URL" }
+    
+    # Get fresh program list from Start Menu
+    $scannedPrograms = @(Get-InstalledPrograms)
+    
+    # Create a set of scanned program paths for quick lookup
+    $scannedPaths = New-Object System.Collections.Generic.HashSet[string]
+    foreach ($prog in $scannedPrograms) {
+        if ($prog.Path) {
+            [void]$scannedPaths.Add($prog.Path.ToLower())
+        }
+    }
+    
+    # Save manually added programs (programs not in the scanned list)
+    foreach ($item in $script:AllItems) {
+        if ($item.Type -eq "Program" -and $item.Path -and -not $scannedPaths.Contains($item.Path.ToLower())) {
+            $manuallyAddedItems += $item
+        }
+    }
+    
+    # Combine scanned programs with manually added items
+    $script:AllItems = $scannedPrograms + $manuallyAddedItems
+    
+    # Remove duplicates and invalid items based on Name+Path+Type+Category
+    $uniqueItems = @{}
+    $finalList = [System.Collections.ArrayList]@()
+    foreach ($item in $script:AllItems) {
+        # Strict validation: check for non-empty values
+        if ($item -and 
+            $item.Name -and $item.Name.Trim() -ne "" -and
+            $item.Path -and $item.Path.Trim() -ne "" -and
+            $item.Type -and $item.Type.Trim() -ne "" -and
+            $item.Category -and $item.Category.Trim() -ne "") {
+            
+            $key = "$($item.Name)|$($item.Path)|$($item.Type)"
+            if (-not $uniqueItems.ContainsKey($key)) {
+                $uniqueItems[$key] = $true
+                [void]$finalList.Add($item)
+            }
+        }
+    }
+    
+    # Sort alphabetically by name
+    $script:AllItems = $finalList | Sort-Object -Property Name
+    
+    # Refresh display with preserved checked state
+    Refresh-ItemList -ListView $listView -SearchText $txtSearch.Text -ResultLabel $lblSearchResults -PreserveCheckedState
+    
+    [System.Windows.Forms.MessageBox]::Show(
+        "Program list refreshed.`n`nTotal items: $($script:AllItems.Count)",
+        "Refresh Complete",
+        "OK",
+        "Information"
+    )
 })
 $toolbar.Items.Add($btnRefresh)
 
@@ -2065,6 +2321,21 @@ $toolbar.Items.Add((New-Object System.Windows.Forms.ToolStripSeparator))
 $btnRemove = New-Object System.Windows.Forms.ToolStripButton
 $btnRemove.Text = "Remove Selected"
 $btnRemove.Add_Click({
+    # Sync global checked items tracker with current ListView state
+    foreach ($item in $listView.Items) {
+        if ($item.Tag) {
+            $key = "$($item.Tag.Name)|$($item.Tag.Path)|$($item.Tag.Type)"
+            if ($item.Checked) {
+                $script:CheckedItems[$key] = $true
+            }
+            else {
+                if ($script:CheckedItems.ContainsKey($key)) {
+                    $script:CheckedItems.Remove($key)
+                }
+            }
+        }
+    }
+    
     # Check for checked items first, then fall back to selected items
     $itemsToRemove = @()
     
@@ -2097,6 +2368,10 @@ $btnRemove.Add_Click({
             foreach ($item in $itemsToRemove) {
                 $key = "$($item.Name)|$($item.Path)|$($item.Type)"
                 [void]$removeSet.Add($key)
+                # Remove from global checked items tracker
+                if ($script:CheckedItems.ContainsKey($key)) {
+                    $script:CheckedItems.Remove($key)
+                }
             }
             
             # Filter to keep only items NOT in the removal set
@@ -2161,7 +2436,7 @@ $lblSearchResults.ForeColor = [System.Drawing.Color]::Gray
 $searchPanel.Controls.Add($lblSearchResults)
 
 $txtSearch.Add_TextChanged({
-    Refresh-ItemList -ListView $listView -SearchText $txtSearch.Text -ResultLabel $lblSearchResults
+    Refresh-ItemList -ListView $listView -SearchText $txtSearch.Text -ResultLabel $lblSearchResults -PreserveCheckedState
 })
 
 $mainForm.Controls.Add($searchPanel)
@@ -2173,6 +2448,10 @@ $listView.View = "Details"
 $listView.FullRowSelect = $true
 $listView.GridLines = $true
 $listView.CheckBoxes = $true
+$listView.MultiSelect = $true
+$listView.HideSelection = $false
+$listView.VirtualMode = $false
+$listView.Sorting = [System.Windows.Forms.SortOrder]::None
 
 $listView.Columns.Add("Name", 250) | Out-Null
 $listView.Columns.Add("Type", 80) | Out-Null
@@ -2203,11 +2482,29 @@ $btnBuild.FlatStyle = "Flat"
 $btnBuild.FlatAppearance.BorderSize = 0
 $btnBuild.Cursor = "Hand"
 $btnBuild.Add_Click({
-    # Get checked items
-    $selectedItems = @()
+    # Sync global checked items tracker with current ListView state
     foreach ($item in $listView.Items) {
-        if ($item.Checked) {
-            $selectedItems += $item.Tag
+        if ($item.Tag) {
+            $key = "$($item.Tag.Name)|$($item.Tag.Path)|$($item.Tag.Type)"
+            if ($item.Checked) {
+                $script:CheckedItems[$key] = $true
+            }
+            else {
+                if ($script:CheckedItems.ContainsKey($key)) {
+                    $script:CheckedItems.Remove($key)
+                }
+            }
+        }
+    }
+    
+    # Get all checked items from global tracker
+    $selectedItems = @()
+    foreach ($item in $script:AllItems) {
+        if ($item -and $item.Name -and $item.Type -and $item.Path) {
+            $key = "$($item.Name)|$($item.Path)|$($item.Type)"
+            if ($script:CheckedItems.ContainsKey($key)) {
+                $selectedItems += $item
+            }
         }
     }
     

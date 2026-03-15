@@ -26,12 +26,12 @@ The standalone EXE build process converts your PowerShell-based application into
 
 ### Benefits of Standalone EXE
 
-✅ **No visible source code** - PS1 files are compiled into the EXE, protected from viewing/modification  
-✅ **Single file distribution** - Just copy one `.exe` file to target PCs  
-✅ **Professional appearance** - Custom application name and icon  
-✅ **No installation required** - Double-click to run, works immediately  
-✅ **Corporate-friendly** - Works with security policies, no script execution concerns  
-✅ **Icon everywhere** - Your custom icon shows in Explorer, taskbar, desktop, and Alt+Tab  
+- **No visible source code** - PS1 files are compiled into the EXE, protected from viewing/modification  
+- **Single file distribution** - Just copy one `.exe` file to target PCs  
+- **Professional appearance** - Custom application name and icon  
+- **No installation required** - Double-click to run, works immediately  
+- **Corporate-friendly** - Works with security policies, no script execution concerns  
+- **Icon everywhere** - Your custom icon shows in Explorer, taskbar, desktop, and Alt+Tab  
 
 ---
 
@@ -69,15 +69,15 @@ Source PC (Build):              Target PC (Deploy):
 ## Prerequisites
 
 ### Required:
-- ✅ Windows 7 or later
-- ✅ PowerShell 5.1 or higher (pre-installed on Windows 10/11)
-- ✅ .NET Framework 4.0+ (usually pre-installed)
-- ✅ Internet connection (first build only, to download PS2EXE module)
+- Windows 7 or later
+- PowerShell 5.1 or higher (pre-installed on Windows 10/11)
+- .NET Framework 4.0+ (usually pre-installed)
+- Internet connection (first build only, to download PS2EXE module)
 
 ### Optional:
 - 📦 Administrator rights (for system-wide PS2EXE installation)
   - *Note: Not required - can install for current user only*
-- 🎨 Custom `.ico` file for application icon
+- Custom `.ico` file for application icon
   - *See ICON_GUIDE.md for details*
 
 ### Check Your PowerShell Version:
@@ -95,10 +95,10 @@ Should show version 5.1 or higher.
 Simply **double-click** `QuickBuild.bat`
 
 That's it! The script will:
-1. ✅ Check if PS2EXE is installed
-2. ✅ Install PS2EXE if needed (automatically)
-3. ✅ Compile PortalBuilder.ps1 to PortalBuilder.exe
-4. ✅ Show success message with file location
+1. Check if PS2EXE is installed
+2. Install PS2EXE if needed (automatically)
+3. Compile PortalBuilder.ps1 to PortalBuilder.exe
+4. Show success message with file location
 
 **First time build** will take 1-2 minutes (downloading PS2EXE module).  
 **Subsequent builds** take 30-60 seconds.
@@ -196,11 +196,11 @@ After building with a custom icon:
 
 | Location | Appears |
 |----------|---------|
-| **File Explorer** | ✅ Your icon shows next to the .exe file |
-| **Desktop Shortcut** | ✅ Desktop shortcut shows your icon |
-| **Taskbar** | ✅ Running app shows your icon in taskbar |
-| **Alt+Tab** | ✅ Window switcher shows your icon |
-| **Properties** | ✅ File properties dialog shows your icon |
+| **File Explorer** | Your icon shows next to the .exe file |
+| **Desktop Shortcut** | Desktop shortcut shows your icon |
+| **Taskbar** | Running app shows your icon in taskbar |
+| **Alt+Tab** | Window switcher shows your icon |
+| **Properties** | File properties dialog shows your icon |
 
 **For complete icon instructions, see [ICON_GUIDE.md](ICON_GUIDE.md)**
 
@@ -407,8 +407,8 @@ powershell -Command "Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Byp
 ### Q: Does this work on Windows 7? Windows 11?
 
 **A:** Yes! The compiled EXE works on:
-- ✅ Windows 7, 8, 8.1, 10, 11
-- ✅ Windows Server 2008 R2 and later
+- Windows 7, 8, 8.1, 10, 11
+- Windows Server 2008 R2 and later
 
 Requirements:
 - .NET Framework 4.0+ (usually pre-installed)
